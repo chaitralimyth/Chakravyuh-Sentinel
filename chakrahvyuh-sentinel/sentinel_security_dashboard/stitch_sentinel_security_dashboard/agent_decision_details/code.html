@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Alert Detail Panel - Chakravyuh Sentinel</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@450&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-tint": "#565e74",
+                        "on-secondary-fixed-variant": "#004395",
+                        "secondary-container": "#2170e4",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-container": "#fefcff",
+                        "tertiary-fixed": "#89f5e7",
+                        "tertiary": "#000000",
+                        "error": "#ba1a1a",
+                        "primary-fixed-dim": "#bec6e0",
+                        "secondary-fixed-dim": "#adc6ff",
+                        "primary-fixed": "#dae2fd",
+                        "on-tertiary-container": "#0c9488",
+                        "on-secondary": "#ffffff",
+                        "primary-container": "#131b2e",
+                        "on-secondary-fixed": "#001a42",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed": "#131b2e",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "secondary": "#0058be",
+                        "on-tertiary-fixed-variant": "#005049",
+                        "surface-dim": "#d8dadc",
+                        "tertiary-fixed-dim": "#6bd8cb",
+                        "on-error": "#ffffff",
+                        "background": "#f7f9fb",
+                        "surface-container-high": "#e6e8ea",
+                        "on-primary-container": "#7c839b",
+                        "surface-container": "#eceef0",
+                        "primary": "#000000",
+                        "surface-variant": "#e0e3e5",
+                        "outline": "#76777d",
+                        "secondary-fixed": "#d8e2ff",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed": "#00201d",
+                        "on-surface-variant": "#45464d",
+                        "surface-container-highest": "#e0e3e5",
+                        "tertiary-container": "#00201d",
+                        "outline-variant": "#c6c6cd",
+                        "on-background": "#191c1e",
+                        "surface-container-low": "#f2f4f6",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "surface-bright": "#f7f9fb",
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#2d3133",
+                        "surface": "#f7f9fb",
+                        "inverse-primary": "#bec6e0",
+                        "inverse-on-surface": "#eff1f3"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "gutter": "16px",
+                        "sidebar-width": "260px",
+                        "container-padding": "24px",
+                        "component-gap": "12px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "display": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "data-mono": ["13px", { "lineHeight": "18px", "fontWeight": "450" }],
+                        "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface font-body-md text-on-surface h-screen overflow-hidden flex">
+<!-- Suppressed SideNavBar and TopAppBar as this is a specific transactional/detail view that might act as an overlay or dedicated focused page. -->
+<!-- Main Content Canvas - Drawer Overlay Style -->
+<main class="w-full h-full flex justify-end p-0 bg-surface-variant/30 backdrop-blur-sm">
+<div class="bg-surface-container-lowest w-full max-w-3xl h-full flex flex-col border-l border-surface-variant shadow-[-4px_0_12px_rgba(15,23,42,0.08)] overflow-hidden">
+<!-- Header -->
+<div class="px-container-padding py-4 border-b border-surface-variant flex justify-between items-center bg-surface-bright">
+<div class="flex items-center gap-component-gap">
+<div class="w-8 h-8 rounded bg-error-container text-on-error-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">warning</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Alert #1024 Details</h2>
+</div>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Scrollable Content -->
+<div class="p-container-padding overflow-y-auto flex-1 flex flex-col gap-8">
+<!-- Action Flow Visualization -->
+<div>
+<div class="bg-surface rounded-lg border border-surface-variant p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+<div class="flex-1 w-full flex flex-col items-center gap-2 p-4 bg-surface-container-lowest rounded-lg border border-surface-variant shadow-sm">
+<span class="material-symbols-outlined text-[24px] text-primary">model_training</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase text-center">Behavior Model</span>
+<span class="font-data-mono text-data-mono text-error font-bold">ATTACKER</span>
+</div>
+<span class="material-symbols-outlined text-outline hidden sm:block">arrow_forward</span>
+<span class="material-symbols-outlined text-outline block sm:hidden rotate-90">arrow_forward</span>
+<div class="flex-1 w-full flex flex-col items-center gap-2 p-4 bg-primary-container rounded-lg border border-primary-container shadow-sm">
+<span class="material-symbols-outlined text-[24px] text-on-primary">smart_toy</span>
+<span class="font-label-caps text-label-caps text-primary-fixed-dim uppercase text-center">Agent Decision</span>
+<span class="font-data-mono text-data-mono text-on-primary font-bold">BLOCK</span>
+</div>
+<span class="material-symbols-outlined text-outline hidden sm:block">arrow_forward</span>
+<span class="material-symbols-outlined text-outline block sm:hidden rotate-90">arrow_forward</span>
+<div class="flex-1 w-full flex flex-col items-center gap-2 p-4 bg-surface-container-lowest rounded-lg border border-surface-variant shadow-sm">
+<span class="material-symbols-outlined text-[24px] text-error">gpp_bad</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase text-center">Middleware</span>
+<span class="font-data-mono text-data-mono text-error font-bold">403 FORBIDDEN</span>
+</div>
+</div>
+</div>
+<!-- Agent Decision Reasoning -->
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-3">Agent Decision Reasoning</h3>
+<div class="bg-surface-container-low p-4 rounded-lg border border-surface-variant">
+<p class="font-body-md text-body-md text-on-surface">The agent determined a block action was necessary due to the behavior model predicting an ATTACKER classification with 76.5% confidence. The primary indicator observed was a <span class="font-data-mono text-data-mono bg-surface-variant px-1 rounded">HIGH_FREQ_UNIQUE_EP_RATIO</span>, suggesting active probing or vulnerability scanning.</p>
+</div>
+</div>
+<!-- Details Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Alert Info Section -->
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-4 border-b border-surface-variant pb-2">Alert Information</h3>
+<div class="flex flex-col gap-3">
+<div class="flex justify-between items-center border-b border-surface-variant pb-3">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Alert ID</span>
+<span class="font-data-mono text-data-mono text-on-surface">#1024</span>
+</div>
+<div class="flex justify-between items-center border-b border-surface-variant pb-3">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">IP Address</span>
+<span class="font-data-mono text-data-mono text-on-surface">127.0.0.1</span>
+</div>
+<div class="flex justify-between items-center border-b border-surface-variant pb-3">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Timestamp</span>
+<span class="font-data-mono text-data-mono text-on-surface">Aug 10, 2026 10:42 AM</span>
+</div>
+<div class="flex justify-between items-center border-b border-surface-variant pb-3">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Prediction</span>
+<span class="font-data-mono text-data-mono text-error font-bold">ATTACKER</span>
+</div>
+<div class="flex justify-between items-center border-b border-surface-variant pb-3">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Confidence</span>
+<span class="font-data-mono text-data-mono text-error font-bold">76.5%</span>
+</div>
+<div class="flex justify-between items-center border-b border-surface-variant pb-3">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Agent Action</span>
+<span class="font-data-mono text-data-mono text-error flex items-center gap-1 font-bold">
+<span class="material-symbols-outlined text-[16px]">block</span> BLOCK
+                                </span>
+</div>
+<div class="flex justify-between items-center pb-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Reason</span>
+<span class="font-data-mono text-data-mono text-on-surface text-right max-w-[200px] truncate" title="HIGH_FREQ_UNIQUE_EP_RATIO">HIGH_FREQ_UNIQUE_EP_RATIO</span>
+</div>
+</div>
+</div>
+<!-- Session Info Section -->
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-4 border-b border-surface-variant pb-2">Session Information</h3>
+<div class="flex flex-col gap-3">
+<div class="flex justify-between items-center border-b border-surface-variant pb-3">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Session ID</span>
+<span class="font-data-mono text-data-mono text-on-surface">sess_99</span>
+</div>
+<div class="flex justify-between items-center border-b border-surface-variant pb-3">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Request Count</span>
+<span class="font-data-mono text-data-mono text-on-surface">142</span>
+</div>
+<div class="flex justify-between items-center border-b border-surface-variant pb-3">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Session Duration</span>
+<span class="font-data-mono text-data-mono text-on-surface">12s</span>
+</div>
+<div class="flex justify-between items-center border-b border-surface-variant pb-3">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Status</span>
+<span class="font-data-mono text-data-mono text-on-surface">ACTIVE</span>
+</div>
+<div class="flex justify-between items-center border-b border-surface-variant pb-3">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Started At</span>
+<span class="font-data-mono text-data-mono text-on-surface">10:41:48 AM</span>
+</div>
+<div class="flex justify-between items-center pb-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Last Activity</span>
+<span class="font-data-mono text-data-mono text-on-surface">10:42:00 AM</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Footer -->
+<div class="px-container-padding py-4 border-t border-surface-variant bg-surface-bright flex justify-between items-center">
+<button class="font-label-caps text-label-caps px-4 py-2 text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">download</span> Export Data
+                </button>
+<div class="flex gap-3">
+<button class="font-label-caps text-label-caps px-4 py-2 border border-surface-variant rounded-lg bg-surface-container-lowest text-primary hover:bg-surface-variant/20 transition-colors">
+                        Whitelist IP
+                    </button>
+<button class="font-label-caps text-label-caps px-4 py-2 rounded-lg bg-primary-container text-on-primary border border-primary-container hover:bg-primary-container/90 transition-colors">
+                        Mark as Read
+                    </button>
+</div>
+</div>
+</div>
+</main>
+</body></html>

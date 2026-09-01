@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dashboard Overview - Chakravyuh Sentinel</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-tint": "#565e74",
+                        "on-secondary-fixed-variant": "#004395",
+                        "secondary-container": "#2170e4",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-container": "#fefcff",
+                        "tertiary-fixed": "#89f5e7",
+                        "tertiary": "#000000",
+                        "error": "#ba1a1a",
+                        "primary-fixed-dim": "#bec6e0",
+                        "secondary-fixed-dim": "#adc6ff",
+                        "primary-fixed": "#dae2fd",
+                        "on-tertiary-container": "#0c9488",
+                        "on-secondary": "#ffffff",
+                        "primary-container": "#131b2e",
+                        "on-secondary-fixed": "#001a42",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed": "#131b2e",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "secondary": "#0058be",
+                        "on-tertiary-fixed-variant": "#005049",
+                        "surface-dim": "#d8dadc",
+                        "tertiary-fixed-dim": "#6bd8cb",
+                        "on-error": "#ffffff",
+                        "background": "#f7f9fb",
+                        "surface-container-high": "#e6e8ea",
+                        "on-primary-container": "#7c839b",
+                        "surface-container": "#eceef0",
+                        "primary": "#000000",
+                        "surface-variant": "#e0e3e5",
+                        "outline": "#76777d",
+                        "secondary-fixed": "#d8e2ff",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed": "#00201d",
+                        "on-surface-variant": "#45464d",
+                        "surface-container-highest": "#e0e3e5",
+                        "tertiary-container": "#00201d",
+                        "outline-variant": "#c6c6cd",
+                        "on-background": "#191c1e",
+                        "surface-container-low": "#f2f4f6",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "surface-bright": "#f7f9fb",
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#2d3133",
+                        "surface": "#f7f9fb",
+                        "inverse-primary": "#bec6e0",
+                        "inverse-on-surface": "#eff1f3"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "gutter": "16px",
+                        "sidebar-width": "300px",
+                        "container-padding": "24px",
+                        "component-gap": "12px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "display": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "data-mono": ["13px", { "lineHeight": "18px", "fontWeight": "450" }],
+                        "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20; }
+        .nav-icon { font-size: 20px; }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased flex" data-page="dashboard">
+<!-- Sidebar Navigation -->
+<aside class="w-[300px] h-screen fixed left-0 top-0 flex flex-col bg-primary-container text-on-primary-container z-40 border-r border-outline-variant">
+<!-- Brand Header -->
+<div class="h-16 flex items-center px-gutter border-b border-outline-variant/20">
+<div class="flex items-center gap-component-gap w-full">
+<img alt="Chakravyuh Sentinel Logo" class="w-8 h-8 rounded" data-alt="A minimalist logo design for Chakravyuh Sentinel, featuring a stylized abstract shield or geometric fortress icon in pristine white against a dark background, embodying cybersecurity and solid protection. The design is sleek, highly modern, and completely stripped of unnecessary detail to reflect a high-end corporate identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMz0QNx06gAC9Qm8CQkX-9SariNjQYmjqMxVki4TGtXhFvusmmc5EW8DfevQhJj5XBfyBAvqrxE1sBsHkPSXbOQ1HF5gFD6-_FQmDaji-Og3U0NdG5bgz92UbE2WidXgI463c0thrSI2A7pXVUQoXVI4VuOBEmN-VNJv3TSMhCofVCJvurNygGKmx7IXIxtCFAOPiwXZfr5LGyF1rYCRW6P690J0gqbBvI-8mTC2fgz41MQbGWXiKT"/>
+<div class="flex flex-col">
+<span class="font-headline-lg text-headline-lg font-bold text-on-primary text-[20px] leading-[28px] tracking-tight">Chakravyuh</span>
+<span class="font-label-caps text-label-caps text-on-primary-container/80 uppercase">Sentinel</span>
+</div>
+</div>
+</div>
+<!-- Main Navigation -->
+<nav class="flex-1 overflow-y-auto py-4 px-2 space-y-1">
+<a class="flex items-center gap-component-gap bg-secondary-container text-on-secondary-container border-l-4 border-secondary px-4 py-3 rounded-r-lg font-body-md text-body-md cursor-pointer transition-all" data-nav="dashboard" href="#">
+<span class="material-symbols-outlined nav-icon" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/20 px-4 py-3 rounded-lg font-body-md text-body-md cursor-pointer transition-colors duration-200" data-nav="alerts" href="#">
+<span class="material-symbols-outlined nav-icon" data-icon="warning">warning</span>
+                Security Alerts
+            </a>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/20 px-4 py-3 rounded-lg font-body-md text-body-md cursor-pointer transition-colors duration-200" data-nav="blocked-ips" href="#">
+<span class="material-symbols-outlined nav-icon" data-icon="block">block</span>
+                Blocked IPs
+            </a>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/20 px-4 py-3 rounded-lg font-body-md text-body-md cursor-pointer transition-colors duration-200" data-nav="requests" href="#">
+<span class="material-symbols-outlined nav-icon" data-icon="swap_horiz">swap_horiz</span>
+                Requests
+            </a>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/20 px-4 py-3 rounded-lg font-body-md text-body-md cursor-pointer transition-colors duration-200" data-nav="sessions" href="#">
+<span class="material-symbols-outlined nav-icon" data-icon="history">history</span>
+                Sessions
+            </a>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/20 px-4 py-3 rounded-lg font-body-md text-body-md cursor-pointer transition-colors duration-200" data-nav="analytics" href="#">
+<span class="material-symbols-outlined nav-icon" data-icon="analytics">analytics</span>
+                Behavior Analysis
+            </a>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/20 px-4 py-3 rounded-lg font-body-md text-body-md cursor-pointer transition-colors duration-200 mt-4" href="#">
+<span class="material-symbols-outlined nav-icon" data-icon="settings">settings</span>
+                Settings
+            </a>
+</nav>
+<!-- Pipeline Status -->
+<div class="p-4 border-t border-outline-variant/20">
+<h3 class="font-label-caps text-label-caps text-on-primary-container/80 uppercase mb-3 px-2">Security Pipeline Status</h3>
+<ul class="space-y-2 px-2">
+<li class="flex items-center gap-2 font-body-sm text-body-sm text-on-primary-container">
+<span class="material-symbols-outlined text-[16px] text-blue-400">check_circle</span> Request Logging
+        </li>
+<li class="flex items-center gap-2 font-body-sm text-body-sm text-on-primary-container">
+<span class="material-symbols-outlined text-[16px] text-blue-400">check_circle</span> Session Builder
+        </li>
+<li class="flex items-center gap-2 font-body-sm text-body-sm text-on-primary-container">
+<span class="material-symbols-outlined text-[16px] text-emerald-400">check_circle</span> Behavior Model
+        </li>
+<li class="flex items-center gap-2 font-body-sm text-body-sm text-on-primary-container">
+<span class="material-symbols-outlined text-[16px] text-emerald-400">check_circle</span> Agent Engine
+        </li>
+<li class="flex items-center gap-2 font-body-sm text-body-sm text-on-primary-container">
+<span class="material-symbols-outlined text-[16px] text-secondary">check_circle</span> Blocking Middleware
+        </li>
+</ul>
+</div>
+<!-- CTA & Footer -->
+<div class="p-4 border-t border-outline-variant/20 space-y-4">
+<div class="flex items-center gap-2 px-2">
+<div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+<span class="font-label-caps text-label-caps text-on-primary-container">Security Engine Online</span>
+</div>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/20 px-4 py-3 rounded-lg font-body-md text-body-md cursor-pointer transition-colors duration-200" href="#">
+<span class="material-symbols-outlined nav-icon" data-icon="account_circle">account_circle</span>
+                Admin Profile
+            </a>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="flex-1 ml-[300px] flex flex-col min-h-screen">
+<!-- Top App Bar -->
+<header class="h-16 fixed top-0 right-0 z-30 w-[calc(100%-300px)] bg-surface border-b border-outline-variant/30 flex items-center justify-between px-gutter">
+<!-- Search -->
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant/50 rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/10 transition-all" placeholder="Search logs, IPs, or alerts..." type="text"/>
+</div>
+<!-- Actions & Profile -->
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:text-secondary hover:bg-surface-variant/20 rounded-full transition-colors relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-secondary hover:bg-surface-variant/20 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="w-px h-6 bg-outline-variant/40 mx-2"></div>
+<button class="flex items-center gap-2">
+<img alt="Admin User" class="w-8 h-8 rounded-full border border-outline-variant" data-alt="A small, professional headshot photo of a cybersecurity administrator, sharp lighting, corporate modern background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCP4GhG-SzR3cNaN3CVW8aZlwUseCqvmnKJ5XLl9SFcMIbid3pM-0YzUdDj_MRlPrZOGZXfhBvadVtpbrZ9NdCoti6UIUBZTOq666cZCFF8l61OWyaDZF50jhgCvJAZpzyXzV4h7s5DyFCia8Xz4-xgt4yKlJhZaOMso_NrdQHK1IPVjX6IsnbmkfymBTvMJeaY75-NiQTm9oGag09GvSLf0w1KkYTyGcMERScjEtseelYZQo43NbiO"/>
+</button>
+</div>
+</header>
+<!-- Main Dashboard Canvas -->
+<main class="flex-1 mt-16 p-container-padding overflow-y-auto">
+<!-- Page Header -->
+<div class="flex items-center justify-between mb-6">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Dashboard Overview</h1>
+<button id="refresh-btn" class="flex items-center gap-2 bg-secondary text-on-secondary px-4 py-2 rounded-lg font-body-md text-body-md hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]" data-icon="refresh">refresh</span>
+                    Live Refresh
+                </button>
+</div>
+<!-- Metric Row -->
+<div class="grid grid-cols-4 gap-4 mb-6">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 flex flex-col justify-between h-[104px]">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Total Requests</span>
+<div class="flex items-end justify-between">
+<span id="stat-total-requests" class="font-headline-md text-headline-md text-on-surface">—</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-medium">
+                            Current total
+                        </span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 flex flex-col justify-between h-[104px]">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Active Sessions</span>
+<div class="flex items-end justify-between">
+<span id="stat-active-sessions" class="font-headline-md text-headline-md text-on-surface">—</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-medium">
+                            Current total
+                        </span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 flex flex-col justify-between h-[104px]">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Security Alerts</span>
+<div class="flex items-end justify-between">
+<span id="stat-total-alerts" class="font-headline-md text-headline-md text-on-surface">—</span>
+<span id="stat-unread-alerts" class="font-body-sm text-body-sm text-amber-600 font-medium bg-amber-50 px-1.5 py-0.5 rounded">Unread</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 border-l-4 border-l-error flex flex-col justify-between h-[104px]">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Active Blocked IPs</span>
+<div class="flex items-end justify-between">
+<span id="stat-blocked-ips" class="font-headline-md text-headline-md text-error">—</span>
+<span class="font-body-sm text-body-sm text-error font-medium truncate max-w-[120px]" title="IPs currently blocked by Sentinel">IPs currently blocked by Sentinel</span>
+</div>
+</div>
+</div>
+<!-- Charts Row -->
+<div class="grid grid-cols-12 gap-6 mb-6">
+<!-- Activity Overview Chart -->
+<div class="col-span-8 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/30 h-[360px] flex flex-col">
+<div class="flex items-center justify-between mb-4">
+<h2 class="font-headline-md text-headline-md text-on-surface">Security Activity Overview</h2>
+<div class="flex items-center gap-4 font-body-sm text-body-sm text-on-surface-variant">
+<div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-sm bg-emerald-500"></div> Allowed</div>
+<div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-sm bg-error/80"></div> Blocked</div>
+</div>
+</div>
+<!-- Chart Placeholder (Mocked with CSS gradient/bars for layout) -->
+<div class="flex-1 relative border-l border-b border-outline-variant/30 flex items-end justify-between pt-4 px-2">
+<!-- Mock bars -->
+<div class="w-8 flex flex-col justify-end h-[60%] gap-1"><div class="w-full bg-error/80 h-[20%] rounded-t-sm"></div><div class="w-full bg-emerald-500 h-[80%] rounded-t-sm"></div></div>
+<div class="w-8 flex flex-col justify-end h-[40%] gap-1"><div class="w-full bg-error/80 h-[10%] rounded-t-sm"></div><div class="w-full bg-emerald-500 h-[90%] rounded-t-sm"></div></div>
+<div class="w-8 flex flex-col justify-end h-[70%] gap-1"><div class="w-full bg-error/80 h-[30%] rounded-t-sm"></div><div class="w-full bg-emerald-500 h-[70%] rounded-t-sm"></div></div>
+<div class="w-8 flex flex-col justify-end h-[90%] gap-1"><div class="w-full bg-error/80 h-[15%] rounded-t-sm"></div><div class="w-full bg-emerald-500 h-[85%] rounded-t-sm"></div></div>
+<div class="w-8 flex flex-col justify-end h-[50%] gap-1"><div class="w-full bg-error/80 h-[5%] rounded-t-sm"></div><div class="w-full bg-emerald-500 h-[95%] rounded-t-sm"></div></div>
+<div class="w-8 flex flex-col justify-end h-[100%] gap-1"><div class="w-full bg-error/80 h-[40%] rounded-t-sm"></div><div class="w-full bg-emerald-500 h-[60%] rounded-t-sm"></div></div>
+<div class="w-8 flex flex-col justify-end h-[85%] gap-1"><div class="w-full bg-error/80 h-[25%] rounded-t-sm"></div><div class="w-full bg-emerald-500 h-[75%] rounded-t-sm"></div></div>
+<!-- Grid lines -->
+<div class="absolute w-full border-t border-outline-variant/20 border-dashed top-[25%] left-0"></div>
+<div class="absolute w-full border-t border-outline-variant/20 border-dashed top-[50%] left-0"></div>
+<div class="absolute w-full border-t border-outline-variant/20 border-dashed top-[75%] left-0"></div>
+</div>
+</div>
+<!-- Threat Detection Donut -->
+<div class="col-span-4 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/30 h-[360px] flex flex-col">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-6">Agent Decision Distribution</h2>
+<div class="flex-1 flex items-center justify-center relative">
+<!-- CSS Donut Chart Mock -->
+<div class="w-48 h-48 rounded-full border-[16px] border-surface-container relative" style="border-top-color: #ba1a1a; border-right-color: #ba1a1a; border-bottom-color: #10b981; border-left-color: #10b981; transform: rotate(-45deg);"></div>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span id="decision-total" class="font-display text-display text-on-surface">—</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Decisions</span>
+</div>
+</div>
+<div class="flex justify-center gap-6 mt-4 font-body-sm text-body-sm">
+<div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-emerald-500"></div><span id="decision-normal-pct">Normal</span></div>
+<div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-error"></div><span id="decision-attacker-pct">Attacker</span></div>
+</div>
+</div>
+</div>
+<!-- Data Table Section -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 overflow-hidden mb-6">
+<div class="px-6 py-4 border-b border-outline-variant/30 flex items-center justify-between">
+<h2 class="font-headline-md text-headline-md text-on-surface">Recent Security Alerts</h2>
+<button class="text-secondary font-body-sm text-body-sm font-medium hover:underline" data-nav="alerts" id="view-all-alerts">View All</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low font-label-caps text-label-caps text-on-surface-variant uppercase">
+<th class="px-6 py-3 font-semibold">IP</th>
+<th class="px-6 py-3 font-semibold">Prediction</th>
+<th class="px-6 py-3 font-semibold">Confidence (%)</th>
+<th class="px-6 py-3 font-semibold">Agent Action</th>
+<th class="px-6 py-3 font-semibold">Reason</th>
+<th class="px-6 py-3 font-semibold">Timestamp</th>
+<th class="px-6 py-3 font-semibold text-right">Status</th>
+</tr>
+</thead>
+<tbody id="recent-alerts-body" class="font-body-md text-body-md text-on-surface divide-y divide-outline-variant/20">
+<tr><td colspan="7" class="px-6 py-8 text-center text-on-surface-variant">Loading alerts…</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Footer Indicators -->
+<div class="flex items-center gap-6 font-body-sm text-body-sm text-on-surface-variant mt-auto pt-4 pb-2 border-t border-outline-variant/20">
+<div class="flex items-center gap-2">
+<span class="text-emerald-500 text-[10px]">●</span> Security Engine Online
+                </div>
+<div class="flex items-center gap-2">
+<span class="text-emerald-500 text-[10px]">●</span> Database Connected
+                </div>
+</div>
+</main>
+</div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/format.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/pages.js"></script>
+<script src="../js/init.js"></script>
+</body></html>

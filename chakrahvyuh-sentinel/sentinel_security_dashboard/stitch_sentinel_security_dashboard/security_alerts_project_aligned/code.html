@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Security Alerts - Chakravyuh Sentinel</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-tint": "#565e74",
+                      "on-secondary-fixed-variant": "#004395",
+                      "secondary-container": "#2170e4",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-container": "#fefcff",
+                      "tertiary-fixed": "#89f5e7",
+                      "tertiary": "#000000",
+                      "error": "#ba1a1a",
+                      "primary-fixed-dim": "#bec6e0",
+                      "secondary-fixed-dim": "#adc6ff",
+                      "primary-fixed": "#dae2fd",
+                      "on-tertiary-container": "#0c9488",
+                      "on-secondary": "#ffffff",
+                      "primary-container": "#131b2e",
+                      "on-secondary-fixed": "#001a42",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-fixed": "#131b2e",
+                      "on-primary": "#ffffff",
+                      "on-surface": "#191c1e",
+                      "secondary": "#0058be",
+                      "on-tertiary-fixed-variant": "#005049",
+                      "surface-dim": "#d8dadc",
+                      "tertiary-fixed-dim": "#6bd8cb",
+                      "on-error": "#ffffff",
+                      "background": "#f7f9fb",
+                      "surface-container-high": "#e6e8ea",
+                      "on-primary-container": "#7c839b",
+                      "surface-container": "#eceef0",
+                      "primary": "#000000",
+                      "surface-variant": "#e0e3e5",
+                      "outline": "#76777d",
+                      "secondary-fixed": "#d8e2ff",
+                      "on-error-container": "#93000a",
+                      "on-tertiary-fixed": "#00201d",
+                      "on-surface-variant": "#45464d",
+                      "surface-container-highest": "#e0e3e5",
+                      "tertiary-container": "#00201d",
+                      "outline-variant": "#c6c6cd",
+                      "on-background": "#191c1e",
+                      "surface-container-low": "#f2f4f6",
+                      "on-primary-fixed-variant": "#3f465c",
+                      "surface-bright": "#f7f9fb",
+                      "error-container": "#ffdad6",
+                      "inverse-surface": "#2d3133",
+                      "surface": "#f7f9fb",
+                      "inverse-primary": "#bec6e0",
+                      "inverse-on-surface": "#eff1f3"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "gutter": "16px",
+                      "sidebar-width": "260px",
+                      "container-padding": "24px",
+                      "component-gap": "12px"
+              },
+              "fontFamily": {
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "display": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "data-mono": [
+                              "JetBrains Mono"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display": [
+                              "36px",
+                              {
+                                      "lineHeight": "44px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-mono": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "450"
+                              }
+                      ],
+                      "body-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+            },
+          }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background min-h-screen font-body-md text-body-md overflow-x-hidden" data-page="alerts">
+<!-- Top AppBar -->
+<header class="bg-surface dark:bg-surface text-primary dark:text-primary-fixed-dim font-headline-md text-headline-md font-body-md text-body-md h-16 fixed top-0 right-0 z-30 border-b border-outline-variant dark:border-outline-variant flex items-center justify-between px-gutter ml-[260px] w-[calc(100%-260px)] hidden md:flex">
+<!-- Left Side: Search Bar & Product Name -->
+<div class="flex items-center gap-component-gap">
+<span class="font-headline-md text-headline-md font-semibold text-on-surface dark:text-on-surface ml-4">Chakravyuh Sentinel</span>
+</div>
+<!-- Center: Search -->
+<div class="flex-1 max-w-md mx-8 relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant w-4 h-4 text-[20px]" data-icon="search" style="font-variation-settings: 'FILL' 0;">search</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-DEFAULT py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/10 transition-colors" placeholder="Search..." type="text"/>
+</div>
+<!-- Right Side: Actions -->
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined" data-icon="notifications" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined" data-icon="settings" style="font-variation-settings: 'FILL' 0;">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-primary-fixed-dim overflow-hidden border border-outline-variant flex-shrink-0 cursor-pointer ml-2">
+<img alt="Admin User" class="w-full h-full object-cover" data-alt="Professional headshot of a cybersecurity analyst, neutral background, bright light mode aesthetic, sharp focus, corporate style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7cRgualMhGZUIVqOl13NUGzYEAjFNLRJBGNovIaKMmGro4mJCytH-hGWdmsUHnbKtkw6hFJ5HmZhoBVdJxk4xljdbt9YKAajUu2e3ti36221bxGfW3UZVp7wpUnr3BCOOriKWPuwz_mku2vr5cOmIqMRUIhzJ56EDKeuNOpwe-OwabjOp8iAbok-q4BK3zo5HJ7BAvQE0beAQb276_PH3ejUPlh9loh4gOy5uozVrdhksIeMplp3n"/>
+</div>
+</div>
+</header>
+<!-- Side NavBar -->
+<nav class="bg-primary-container dark:bg-primary-container text-secondary dark:text-secondary-fixed-dim w-sidebar-width h-screen fixed left-0 top-0 border-r border-outline-variant dark:border-outline-variant flex flex-col h-full w-[260px] fixed z-40 hidden md:flex">
+<!-- Brand / Header -->
+<div class="px-gutter py-6 flex items-center gap-3 border-b border-surface-tint/20">
+<div class="w-10 h-10 rounded-DEFAULT bg-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="shield" style="font-variation-settings: 'FILL' 1;">shield</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-lg text-headline-lg font-bold text-on-primary dark:text-on-primary text-[20px] leading-tight">Chakravyuh</span>
+<span class="font-label-caps text-label-caps text-on-primary-container">Sentinel</span>
+</div>
+</div>
+<!-- Main Navigation -->
+<div class="flex-1 overflow-y-auto py-4 flex flex-col gap-1">
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 hover:bg-surface-variant/20 dark:hover:bg-surface-variant/10 transition-colors duration-200 cursor-pointer active:opacity-80 transition-all font-label-caps text-label-caps" data-nav="dashboard" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<!-- ACTIVE ITEM -->
+<a class="flex items-center gap-component-gap bg-secondary-container text-on-secondary-container border-l-4 border-secondary px-gutter py-3 hover:bg-surface-variant/20 dark:hover:bg-surface-variant/10 transition-colors duration-200 cursor-pointer active:opacity-80 transition-all font-label-caps text-label-caps" data-nav="alerts" href="#">
+<span class="material-symbols-outlined" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span>
+<span class="font-body-md text-body-md font-medium">Security Alerts</span>
+</a>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 hover:bg-surface-variant/20 dark:hover:bg-surface-variant/10 transition-colors duration-200 cursor-pointer active:opacity-80 transition-all font-label-caps text-label-caps" data-nav="blocked-ips" href="#">
+<span class="material-symbols-outlined" data-icon="block" style="font-variation-settings: 'FILL' 0;">block</span>
+<span class="font-body-md text-body-md">Blocked IPs</span>
+</a>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 hover:bg-surface-variant/20 dark:hover:bg-surface-variant/10 transition-colors duration-200 cursor-pointer active:opacity-80 transition-all font-label-caps text-label-caps" data-nav="requests" href="#">
+<span class="material-symbols-outlined" data-icon="swap_horiz" style="font-variation-settings: 'FILL' 0;">swap_horiz</span>
+<span class="font-body-md text-body-md">Requests</span>
+</a>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 hover:bg-surface-variant/20 dark:hover:bg-surface-variant/10 transition-colors duration-200 cursor-pointer active:opacity-80 transition-all font-label-caps text-label-caps" data-nav="sessions" href="#">
+<span class="material-symbols-outlined" data-icon="history" style="font-variation-settings: 'FILL' 0;">history</span>
+<span class="font-body-md text-body-md">Sessions</span>
+</a>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 hover:bg-surface-variant/20 dark:hover:bg-surface-variant/10 transition-colors duration-200 cursor-pointer active:opacity-80 transition-all font-label-caps text-label-caps" data-nav="analytics" href="#">
+<span class="material-symbols-outlined" data-icon="analytics" style="font-variation-settings: 'FILL' 0;">analytics</span>
+<span class="font-body-md text-body-md">Security Analytics</span>
+</a>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 hover:bg-surface-variant/20 dark:hover:bg-surface-variant/10 transition-colors duration-200 cursor-pointer active:opacity-80 transition-all font-label-caps text-label-caps" href="#">
+<span class="material-symbols-outlined" data-icon="settings" style="font-variation-settings: 'FILL' 0;">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</div>
+<!-- CTA & Footer -->
+<div class="mt-auto px-gutter py-4 border-t border-surface-tint/20 flex flex-col gap-4">
+<div class="flex items-center justify-between text-on-tertiary-container bg-tertiary-container/10 px-3 py-2 rounded-DEFAULT border border-tertiary-container/20">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-tertiary-fixed animate-pulse"></div>
+<span class="font-label-caps text-label-caps text-xs">Security Engine Online</span>
+</div>
+</div>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 p-2 -mx-2 rounded-DEFAULT hover:bg-surface-variant/20 dark:hover:bg-surface-variant/10 transition-colors duration-200 cursor-pointer active:opacity-80 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="account_circle" style="font-variation-settings: 'FILL' 0;">account_circle</span>
+<span class="font-body-md text-body-md">Admin Profile</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="md:ml-[260px] pt-16 min-h-screen p-container-padding pb-24">
+<!-- Header -->
+<div class="mb-8">
+<h1 class="font-display text-display text-on-surface mb-2">Security Alerts</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Monitor suspicious behavior detected by Chakravyuh Sentinel.</p>
+</div>
+<!-- Summary Cards (Bento Grid Style) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-component-gap mb-8">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 flex flex-col gap-2 relative overflow-hidden group hover:border-secondary transition-colors">
+<div class="flex justify-between items-start">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Total Alerts</span>
+<div class="w-8 h-8 rounded-DEFAULT bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]" data-icon="notifications" style="font-variation-settings: 'FILL' 1;">notifications</span>
+</div>
+</div>
+<div id="alert-stat-total" class="font-headline-lg text-headline-lg text-on-surface mt-2">—</div>
+<div class="flex items-center gap-1 text-on-tertiary-container mt-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="trending_up">trending_up</span>
+<span class="font-body-sm text-body-sm">+12% vs last week</span>
+</div>
+<div class="absolute bottom-0 left-0 h-1 w-full bg-surface-variant">
+<div class="h-full bg-primary w-[75%]"></div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 flex flex-col gap-2 relative overflow-hidden group hover:border-error transition-colors">
+<div class="flex justify-between items-start">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Attacker Alerts</span>
+<div class="w-8 h-8 rounded-DEFAULT bg-error-container flex items-center justify-center text-on-error-container">
+<span class="material-symbols-outlined text-[18px]" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+</div>
+<div id="alert-stat-attacker" class="font-headline-lg text-headline-lg text-error mt-2">—</div>
+<div class="flex items-center gap-1 text-error mt-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="priority_high">priority_high</span>
+<span class="font-body-sm text-body-sm">Requires immediate action</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 flex flex-col gap-2 relative overflow-hidden group hover:border-tertiary-fixed-dim transition-colors">
+<div class="flex justify-between items-start">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Blocks</span>
+<div class="w-8 h-8 rounded-DEFAULT bg-surface-container-high flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[18px]" data-icon="block" style="font-variation-settings: 'FILL' 1;">block</span>
+</div>
+</div>
+<div id="alert-stat-blocks" class="font-headline-lg text-headline-lg text-on-surface mt-2">—</div>
+<div class="flex items-center gap-1 text-on-surface-variant mt-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="shield">shield</span>
+<span class="font-body-sm text-body-sm">Auto-mitigation active</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 flex flex-col gap-2 relative overflow-hidden group hover:border-secondary transition-colors">
+<div class="flex justify-between items-start">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Unread Alerts</span>
+<div class="w-8 h-8 rounded-DEFAULT bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed">
+<span class="material-symbols-outlined text-[18px]" data-icon="mark_email_unread" style="font-variation-settings: 'FILL' 1;">mark_email_unread</span>
+</div>
+</div>
+<div id="alert-stat-unread" class="font-headline-lg text-headline-lg text-on-surface mt-2">—</div>
+<div class="flex items-center gap-1 text-secondary mt-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="fiber_manual_record" style="font-variation-settings: 'FILL' 1;">fiber_manual_record</span>
+<span class="font-body-sm text-body-sm">Pending review</span>
+</div>
+</div>
+</div>
+<!-- Filters Section -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 mb-6 flex flex-wrap items-center gap-4">
+<div class="relative flex-1 min-w-[200px]">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant w-4 h-4 text-[18px]" data-icon="search" style="font-variation-settings: 'FILL' 0;">search</span>
+<input class="w-full bg-surface-container border border-outline-variant rounded-DEFAULT py-1.5 pl-9 pr-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/50" placeholder="Search IP..." type="text"/>
+</div>
+<select class="bg-surface-container border border-outline-variant rounded-DEFAULT py-1.5 px-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/50 text-on-surface">
+<option value="">Prediction</option>
+<option value="attacker">Attacker</option>
+<option value="benign">Benign</option>
+</select>
+<select class="bg-surface-container border border-outline-variant rounded-DEFAULT py-1.5 px-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/50 text-on-surface">
+<option value="">Agent Action</option>
+<option value="block">Block</option>
+<option value="allow">Allow</option>
+<option value="challenge">Challenge</option>
+</select>
+<select class="bg-surface-container border border-outline-variant rounded-DEFAULT py-1.5 px-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/50 text-on-surface">
+<option value="">Read/Unread</option>
+<option value="unread">Unread</option>
+<option value="read">Read</option>
+</select>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant w-4 h-4 text-[18px]" data-icon="calendar_today" style="font-variation-settings: 'FILL' 0;">calendar_today</span>
+<input class="bg-surface-container border border-outline-variant rounded-DEFAULT py-1.5 pl-9 pr-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/50 text-on-surface" type="date"/>
+</div>
+<button class="bg-surface-container-highest hover:bg-surface-variant text-on-surface border border-outline-variant rounded-DEFAULT py-1.5 px-4 text-sm font-medium transition-colors">
+        Clear Filters
+    </button>
+</div>
+<!-- Main Table -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm whitespace-nowrap">
+<thead class="bg-surface-container-low border-b border-outline-variant text-on-surface-variant font-label-caps text-label-caps">
+<tr>
+<th class="px-4 py-3 font-medium">Alert ID</th>
+<th class="px-4 py-3 font-medium">IP Address</th>
+<th class="px-4 py-3 font-medium">Prediction</th>
+<th class="px-4 py-3 font-medium">Confidence (%)</th>
+<th class="px-4 py-3 font-medium">Agent Action</th>
+<th class="px-4 py-3 font-medium">Reason</th>
+<th class="px-4 py-3 font-medium">Timestamp</th>
+<th class="px-4 py-3 font-medium">Status</th>
+</tr>
+</thead>
+<tbody id="alerts-table-body" class="divide-y divide-outline-variant/50 text-on-surface">
+<tr><td colspan="8" class="px-4 py-8 text-center text-on-surface-variant">Loading alerts…</td></tr>
+</tbody>
+</table>
+</div>
+<div class="px-4 py-3 border-t border-outline-variant bg-surface-container-lowest flex items-center justify-between text-sm text-on-surface-variant">
+<span>Showing 1 to 4 of 1,248 entries</span>
+<div class="flex gap-2">
+<button class="px-3 py-1 border border-outline-variant rounded text-on-surface-variant hover:bg-surface-container disabled:opacity-50" disabled="">Previous</button>
+<button class="px-3 py-1 border border-outline-variant rounded text-on-surface hover:bg-surface-container">Next</button>
+</div>
+</div>
+</div>
+</main>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/format.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/pages.js"></script>
+<script src="../js/init.js"></script>
+</body></html>

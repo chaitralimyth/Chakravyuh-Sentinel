@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Chakravyuh Sentinel - Session Monitoring</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-tint": "#565e74",
+                      "on-secondary-fixed-variant": "#004395",
+                      "secondary-container": "#2170e4",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-container": "#fefcff",
+                      "tertiary-fixed": "#89f5e7",
+                      "tertiary": "#000000",
+                      "error": "#ba1a1a",
+                      "primary-fixed-dim": "#bec6e0",
+                      "secondary-fixed-dim": "#adc6ff",
+                      "primary-fixed": "#dae2fd",
+                      "on-tertiary-container": "#0c9488",
+                      "on-secondary": "#ffffff",
+                      "primary-container": "#131b2e",
+                      "on-secondary-fixed": "#001a42",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-fixed": "#131b2e",
+                      "on-primary": "#ffffff",
+                      "on-surface": "#191c1e",
+                      "secondary": "#0058be",
+                      "on-tertiary-fixed-variant": "#005049",
+                      "surface-dim": "#d8dadc",
+                      "tertiary-fixed-dim": "#6bd8cb",
+                      "on-error": "#ffffff",
+                      "background": "#f7f9fb",
+                      "surface-container-high": "#e6e8ea",
+                      "on-primary-container": "#7c839b",
+                      "surface-container": "#eceef0",
+                      "primary": "#000000",
+                      "surface-variant": "#e0e3e5",
+                      "outline": "#76777d",
+                      "secondary-fixed": "#d8e2ff",
+                      "on-error-container": "#93000a",
+                      "on-tertiary-fixed": "#00201d",
+                      "on-surface-variant": "#45464d",
+                      "surface-container-highest": "#e0e3e5",
+                      "tertiary-container": "#00201d",
+                      "outline-variant": "#c6c6cd",
+                      "on-background": "#191c1e",
+                      "surface-container-low": "#f2f4f6",
+                      "on-primary-fixed-variant": "#3f465c",
+                      "surface-bright": "#f7f9fb",
+                      "error-container": "#ffdad6",
+                      "inverse-surface": "#2d3133",
+                      "surface": "#f7f9fb",
+                      "inverse-primary": "#bec6e0",
+                      "inverse-on-surface": "#eff1f3"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "gutter": "16px",
+                      "sidebar-width": "260px",
+                      "container-padding": "24px",
+                      "component-gap": "12px"
+              },
+              "fontFamily": {
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "display": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "data-mono": [
+                              "JetBrains Mono"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display": [
+                              "36px",
+                              {
+                                      "lineHeight": "44px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-mono": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "450"
+                              }
+                      ],
+                      "body-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Custom scrollbar for better UI */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e2e8f0; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #cbd5e1; 
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased overflow-hidden" data-page="sessions">
+<!-- SideNavBar -->
+<nav class="flex flex-col h-full w-[260px] fixed z-40 bg-primary-container border-r border-outline-variant">
+<div class="px-gutter py-6 flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-secondary flex items-center justify-center text-on-secondary font-bold text-lg">
+                    CS
+                </div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-on-primary">Chakravyuh</h1>
+<p class="font-label-caps text-label-caps text-on-primary-container">Sentinel</p>
+</div>
+</div>
+<div class="mt-4 bg-secondary/10 border border-secondary/20 rounded-lg p-3 flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-[#10b981]"></span>
+<span class="font-label-caps text-label-caps text-on-primary">Security Engine Online</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto mt-2">
+<ul class="flex flex-col">
+<!-- Dashboard -->
+<li>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 transition-colors duration-200 cursor-pointer active:opacity-80" data-nav="dashboard" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+</li>
+<!-- Security Alerts -->
+<li>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 transition-colors duration-200 cursor-pointer active:opacity-80" data-nav="alerts" href="#">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+<span class="font-body-md text-body-md">Security Alerts</span>
+</a>
+</li>
+<!-- Blocked IPs -->
+<li>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 transition-colors duration-200 cursor-pointer active:opacity-80" data-nav="blocked-ips" href="#">
+<span class="material-symbols-outlined" data-icon="block">block</span>
+<span class="font-body-md text-body-md">Blocked IPs</span>
+</a>
+</li>
+<!-- Requests -->
+<li>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 transition-colors duration-200 cursor-pointer active:opacity-80" data-nav="requests" href="#">
+<span class="material-symbols-outlined" data-icon="swap_horiz">swap_horiz</span>
+<span class="font-body-md text-body-md">Requests</span>
+</a>
+</li>
+<!-- Sessions (Active) -->
+<li>
+<a class="flex items-center gap-component-gap bg-secondary-container text-on-secondary-container border-l-4 border-secondary px-gutter py-3 cursor-pointer active:opacity-80 transition-all" data-nav="sessions" href="#">
+<span class="material-symbols-outlined icon-fill" data-icon="history" data-weight="fill">history</span>
+<span class="font-body-md text-body-md font-medium">Sessions</span>
+</a>
+</li>
+<!-- Security Analytics -->
+<li>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 transition-colors duration-200 cursor-pointer active:opacity-80" data-nav="analytics" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-body-md text-body-md">Security Analytics</span>
+</a>
+</li>
+<!-- Settings -->
+<li>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 transition-colors duration-200 cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</li>
+</ul>
+</div>
+<div class="mt-auto border-t border-outline-variant/30">
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-4 transition-colors duration-200 cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="font-body-md text-body-md">Admin Profile</span>
+</a>
+</div>
+</nav>
+<!-- TopAppBar -->
+<header class="flex items-center justify-between px-gutter ml-[260px] w-[calc(100%-260px)] h-16 fixed top-0 right-0 z-30 bg-surface border-b border-outline-variant">
+<div class="flex-1 flex items-center gap-4">
+<!-- Search Bar on Left -->
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]" data-icon="search">search</span>
+<input class="w-full h-9 pl-9 pr-3 rounded bg-surface-container-low border border-outline-variant/50 focus:border-secondary focus:ring-2 focus:ring-secondary/10 outline-none font-body-sm text-body-sm text-on-surface placeholder:text-on-surface-variant transition-all" placeholder="Search sessions, IPs..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded-full transition-colors scale-95 active:scale-90 flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded-full transition-colors scale-95 active:scale-90 flex items-center justify-center mr-2">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center overflow-hidden border border-outline-variant cursor-pointer">
+<img alt="Admin User" class="w-full h-full object-cover" data-alt="A clean, modern corporate headshot of an administrator in a well-lit office, wearing a dark blazer over a light shirt. The lighting is soft and professional, creating a bright, welcoming light-mode aesthetic suitable for a high-end enterprise dashboard avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0DMUD7XHaQGIqAjwfCxbgWKrm6T3iNNq5JOma0g30j8svO96lBpI0yZhyIPxu6o97__89xRLEuf86s2cGYYOe48YVmDVl8Vn4lNrTOtjWvVbV_JuVr-szFTfrliMQoG555A8NGFMTmO21Qo0kLlKt__ue09z8OXjNrCs60VdrhNt6j4SlVhzLQyGkVpLtXDJHwFtv3FHH4yVeENK6bytq_Y4ZSj9JbQuU8trzDyqEwAS-pJ_7N2e_"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-[260px] pt-16 h-screen flex bg-background">
+<!-- Center Canvas -->
+<div class="flex-1 flex flex-col h-full overflow-hidden">
+<!-- Page Header -->
+<div class="px-container-padding py-6 flex-shrink-0">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Session Monitoring</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Track user behavioral sessions and agent classifications.</p>
+</div>
+<!-- Stats Row -->
+<div class="px-container-padding flex gap-6 flex-shrink-0 mb-6">
+<!-- Active Sessions -->
+<div class="flex-1 bg-surface-container-lowest border border-[#E2E8F0] rounded-lg p-5 flex flex-col justify-between h-28 relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-24 h-24 bg-secondary/5 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+<div class="flex items-center justify-between z-10">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Active Sessions</span>
+<span class="material-symbols-outlined text-secondary" data-icon="bolt">bolt</span>
+</div>
+<div id="session-stat-active" class="font-display text-display text-on-surface z-10">—</div>
+</div>
+<!-- Closed Sessions -->
+<div class="flex-1 bg-surface-container-lowest border border-[#E2E8F0] rounded-lg p-5 flex flex-col justify-between h-28 relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-24 h-24 bg-surface-variant/20 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+<div class="flex items-center justify-between z-10">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Closed Sessions</span>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="check_circle">check_circle</span>
+</div>
+<div id="session-stat-closed" class="font-display text-display text-on-surface z-10">—</div>
+</div>
+<!-- Blocked Sessions -->
+<div class="flex-1 bg-surface-container-lowest border border-[#E2E8F0] rounded-lg p-5 flex flex-col justify-between h-28 relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-24 h-24 bg-error/5 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+<div class="flex items-center justify-between z-10">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Blocked Sessions</span>
+<span class="material-symbols-outlined text-error" data-icon="gpp_bad">gpp_bad</span>
+</div>
+<div id="session-stat-blocked" class="font-display text-display text-error z-10">—</div>
+</div>
+</div>
+<!-- Main Table Area -->
+<div class="flex-1 px-container-padding pb-6 overflow-hidden flex flex-col">
+<div class="flex-1 bg-surface-container-lowest border border-[#E2E8F0] rounded-lg flex flex-col overflow-hidden">
+<!-- Table Toolbar -->
+<div class="h-14 border-b border-[#F1F5F9] flex items-center justify-between px-4 bg-surface-bright flex-shrink-0">
+<div class="flex items-center gap-3">
+<button class="px-3 py-1.5 rounded bg-surface-container-low border border-[#E2E8F0] font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1 hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="filter_list">filter_list</span>
+                                Filter
+                            </button>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 rounded hover:bg-surface-variant/50 flex items-center justify-center text-on-surface-variant transition-colors" title="Refresh">
+<span class="material-symbols-outlined text-[18px]" data-icon="refresh">refresh</span>
+</button>
+</div>
+</div>
+<!-- Table -->
+<div class="flex-1 overflow-auto">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 bg-surface-bright z-10">
+<tr>
+<th class="font-label-caps text-label-caps text-on-surface-variant py-3 px-4 border-b border-[#F1F5F9] whitespace-nowrap">Session ID</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant py-3 px-4 border-b border-[#F1F5F9] whitespace-nowrap">IP Address</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant py-3 px-4 border-b border-[#F1F5F9] whitespace-nowrap text-right">Req Count</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant py-3 px-4 border-b border-[#F1F5F9] whitespace-nowrap">Start Time</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant py-3 px-4 border-b border-[#F1F5F9] whitespace-nowrap">Last Activity</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant py-3 px-4 border-b border-[#F1F5F9] whitespace-nowrap">Status</th>
+</tr>
+</thead>
+<tbody id="sessions-table-body" class="font-body-md text-body-md text-on-surface divide-y divide-[#F1F5F9]">
+<tr><td colspan="6" class="py-8 text-center text-on-surface-variant">Loading sessions…</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Side Panel (Session Details) -->
+<div class="w-[400px] border-l border-outline-variant bg-surface-container-lowest h-full flex flex-col shadow-[-4px_0_12px_rgba(15,23,42,0.03)] z-20">
+<!-- Panel Header -->
+<div class="h-16 border-b border-[#F1F5F9] flex items-center justify-between px-6 flex-shrink-0 bg-surface">
+<h3 class="font-headline-md text-headline-md text-on-surface">Session Details</h3>
+<button class="p-1 text-on-surface-variant hover:text-on-surface rounded transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="close">close</span>
+</button>
+</div>
+<!-- Panel Content Scrollable -->
+<div class="flex-1 overflow-y-auto p-6 space-y-6">
+<!-- ID & Status Header -->
+<div class="flex items-start justify-between">
+<div>
+<div class="font-data-mono text-data-mono text-on-surface text-lg">abc12345</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-1">192.168.1.105</div>
+</div>
+<span class="inline-flex items-center px-2.5 py-1 rounded text-[11px] font-bold bg-secondary/10 text-secondary border border-secondary/20">
+                        ACTIVE
+                    </span>
+</div>
+<hr class="border-[#F1F5F9]"/>
+<!-- Metrics Chart Area (Placeholder) -->
+<div>
+<div class="flex items-center justify-between mb-4">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Request Volume</h4>
+<span class="font-data-mono text-data-mono text-on-surface">1,204 Total</span>
+</div>
+<div class="h-32 bg-background border border-[#E2E8F0] rounded flex items-center justify-center relative overflow-hidden">
+<!-- Simple visual representation of a chart -->
+<div class="absolute bottom-0 left-0 w-full h-full flex items-end px-2 gap-1 opacity-50">
+<div class="w-full bg-secondary/20 h-[20%] rounded-t-sm"></div>
+<div class="w-full bg-secondary/30 h-[40%] rounded-t-sm"></div>
+<div class="w-full bg-secondary/20 h-[30%] rounded-t-sm"></div>
+<div class="w-full bg-secondary/40 h-[60%] rounded-t-sm"></div>
+<div class="w-full bg-secondary/60 h-[80%] rounded-t-sm"></div>
+<div class="w-full bg-secondary/30 h-[45%] rounded-t-sm"></div>
+<div class="w-full bg-secondary/50 h-[70%] rounded-t-sm"></div>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant z-10 bg-surface/80 px-2 py-1 rounded backdrop-blur-sm">Volume over time</span>
+</div>
+</div>
+<hr class="border-[#F1F5F9]"/>
+<!-- Related Alerts -->
+<div>
+<div class="flex items-center justify-between mb-4">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Related Alerts</h4>
+<span class="bg-surface-variant text-on-surface-variant text-[10px] px-2 py-0.5 rounded font-bold">2</span>
+</div>
+<div class="space-y-3">
+<div class="p-3 border border-outline-variant/50 rounded bg-background flex gap-3 items-start">
+<div class="w-6 h-6 rounded bg-[#f59e0b]/10 text-[#f59e0b] flex items-center justify-center flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[14px]" data-icon="warning">warning</span>
+</div>
+<div>
+<div class="font-body-sm font-semibold text-on-surface">Unusual Resource Access</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-1">Accessed /admin/api/v2/config 14 times in 2 minutes.</div>
+<div class="font-label-caps text-[10px] text-on-surface-variant mt-2">10:42 AM</div>
+</div>
+</div>
+<div class="p-3 border border-outline-variant/50 rounded bg-background flex gap-3 items-start">
+<div class="w-6 h-6 rounded bg-[#f59e0b]/10 text-[#f59e0b] flex items-center justify-center flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[14px]" data-icon="warning">warning</span>
+</div>
+<div>
+<div class="font-body-sm font-semibold text-on-surface">Rapid Header Rotation</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-1">Accept-Language header changed 3 times.</div>
+<div class="font-label-caps text-[10px] text-on-surface-variant mt-2">10:28 AM</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Panel Footer Actions -->
+<div class="p-4 border-t border-[#F1F5F9] bg-surface flex gap-3">
+<button class="flex-1 py-2 px-4 border border-[#E2E8F0] bg-surface-container-lowest text-on-secondary-fixed-variant rounded-lg font-body-sm font-semibold hover:bg-surface-container-low transition-colors text-center">
+                    Export Log
+                </button>
+<button class="flex-1 py-2 px-4 bg-[#ba1a1a] text-white rounded-lg font-body-sm font-semibold hover:bg-[#93000a] transition-colors text-center shadow-sm">
+                    Terminate
+                </button>
+</div>
+</div>
+</main>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/format.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/pages.js"></script>
+<script src="../js/init.js"></script>
+</body></html>

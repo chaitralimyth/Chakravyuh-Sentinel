@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Blocked IPs / Agent Response - Chakravyuh Sentinel</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-tint": "#565e74",
+                      "on-secondary-fixed-variant": "#004395",
+                      "secondary-container": "#2170e4",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-container": "#fefcff",
+                      "tertiary-fixed": "#89f5e7",
+                      "tertiary": "#000000",
+                      "error": "#ba1a1a",
+                      "primary-fixed-dim": "#bec6e0",
+                      "secondary-fixed-dim": "#adc6ff",
+                      "primary-fixed": "#dae2fd",
+                      "on-tertiary-container": "#0c9488",
+                      "on-secondary": "#ffffff",
+                      "primary-container": "#131b2e",
+                      "on-secondary-fixed": "#001a42",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-fixed": "#131b2e",
+                      "on-primary": "#ffffff",
+                      "on-surface": "#191c1e",
+                      "secondary": "#0058be",
+                      "on-tertiary-fixed-variant": "#005049",
+                      "surface-dim": "#d8dadc",
+                      "tertiary-fixed-dim": "#6bd8cb",
+                      "on-error": "#ffffff",
+                      "background": "#f7f9fb",
+                      "surface-container-high": "#e6e8ea",
+                      "on-primary-container": "#7c839b",
+                      "surface-container": "#eceef0",
+                      "primary": "#000000",
+                      "surface-variant": "#e0e3e5",
+                      "outline": "#76777d",
+                      "secondary-fixed": "#d8e2ff",
+                      "on-error-container": "#93000a",
+                      "on-tertiary-fixed": "#00201d",
+                      "on-surface-variant": "#45464d",
+                      "surface-container-highest": "#e0e3e5",
+                      "tertiary-container": "#00201d",
+                      "outline-variant": "#c6c6cd",
+                      "on-background": "#191c1e",
+                      "surface-container-low": "#f2f4f6",
+                      "on-primary-fixed-variant": "#3f465c",
+                      "surface-bright": "#f7f9fb",
+                      "error-container": "#ffdad6",
+                      "inverse-surface": "#2d3133",
+                      "surface": "#f7f9fb",
+                      "inverse-primary": "#bec6e0",
+                      "inverse-on-surface": "#eff1f3"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "gutter": "16px",
+                      "sidebar-width": "260px",
+                      "container-padding": "24px",
+                      "component-gap": "12px"
+              },
+              "fontFamily": {
+                      "headline-md": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "body-md": ["Inter"],
+                      "display": ["Inter"],
+                      "label-caps": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "data-mono": ["JetBrains Mono"],
+                      "body-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "display": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "450"}],
+                      "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen" data-page="blocked-ips">
+<!-- SideNavBar Component -->
+<nav class="bg-primary-container dark:bg-primary-container w-sidebar-width h-screen fixed left-0 top-0 border-r border-outline-variant dark:border-outline-variant flex flex-col h-full w-[260px] fixed z-40">
+<!-- Header -->
+<div class="p-container-padding flex items-center gap-component-gap mb-4">
+<div class="w-8 h-8 rounded bg-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary" style="font-variation-settings: 'FILL' 1;">shield</span>
+</div>
+<div>
+<h1 class="font-headline-lg text-headline-lg font-bold text-on-primary dark:text-on-primary">Chakravyuh</h1>
+<p class="font-label-caps text-label-caps text-on-primary-container">Sentinel</p>
+</div>
+</div>
+<!-- Main Navigation -->
+<div class="flex-1 flex flex-col gap-1 overflow-y-auto">
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 transition-colors duration-200 cursor-pointer active:opacity-80" data-nav="dashboard" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 transition-colors duration-200 cursor-pointer active:opacity-80" data-nav="alerts" href="#">
+<span class="material-symbols-outlined">warning</span>
+<span class="font-body-md text-body-md">Security Alerts</span>
+</a>
+<!-- Active Tab -->
+<a class="flex items-center gap-component-gap bg-secondary-container text-on-secondary-container border-l-4 border-secondary px-gutter py-3 cursor-pointer active:opacity-80 transition-all" data-nav="blocked-ips" href="#">
+<span class="material-symbols-outlined">block</span>
+<span class="font-body-md text-body-md font-semibold">Blocked IPs</span>
+</a>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 transition-colors duration-200 cursor-pointer active:opacity-80" data-nav="requests" href="#">
+<span class="material-symbols-outlined">swap_horiz</span>
+<span class="font-body-md text-body-md">Requests</span>
+</a>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 transition-colors duration-200 cursor-pointer active:opacity-80" data-nav="sessions" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-body-md text-body-md">Sessions</span>
+</a>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 transition-colors duration-200 cursor-pointer active:opacity-80" data-nav="analytics" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-md text-body-md">Security Analytics</span>
+</a>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 transition-colors duration-200 cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</div>
+<!-- CTA & Footer -->
+<div class="p-gutter flex flex-col gap-unit mt-auto">
+<div class="flex items-center gap-2 p-3 rounded-lg bg-surface-variant/5 border border-surface-variant/10">
+<span class="material-symbols-outlined text-tertiary-fixed text-[16px]">check_circle</span>
+<span class="font-label-caps text-label-caps text-on-primary-container">Security Engine Online</span>
+</div>
+<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 transition-colors duration-200 cursor-pointer active:opacity-80 rounded-lg" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="font-body-md text-body-md">Admin Profile</span>
+</a>
+</div>
+</nav>
+<!-- TopAppBar Component -->
+<header class="bg-surface dark:bg-surface h-16 fixed top-0 right-0 z-30 border-b border-outline-variant dark:border-outline-variant flex items-center justify-between px-gutter ml-[260px] w-[calc(100%-260px)]">
+<!-- Search (Left) -->
+<div class="flex items-center w-64">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full h-10 pl-10 pr-4 rounded bg-surface-container-low border border-outline-variant focus:border-secondary focus:ring-2 focus:ring-secondary/10 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/70 outline-none transition-all" placeholder="Search IPs, domains..." type="text"/>
+</div>
+</div>
+<!-- Trailing Actions (Right) -->
+<div class="flex items-center gap-component-gap">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-secondary dark:hover:text-secondary-fixed transition-colors scale-95 active:scale-90 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-error"></span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-secondary dark:hover:text-secondary-fixed transition-colors scale-95 active:scale-90">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-px h-6 bg-outline-variant mx-1"></div>
+<img class="w-9 h-9 rounded-full object-cover border border-outline-variant ml-2" data-alt="A small circular avatar image showing a professional, minimalist portrait of a security administrator against a clean, light mode background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1TBcN70_A_9F-r-wm2YZ8ahHj0_9IxKH7I0JPrjax3EXASTbr79sQhXMj44HL_WpsmxtOEhBY0b3xKP1DtXu4Si2ZBTDxhS6I8NnF6rKP-0W2Q_PlfCzJZBA8Qe5pluKla8HFzAoAqJ0rLY2eSLL8DblpScSR3oHsW9C95qwq6VvULs9y1kfAbhf6DC6_OG5gnGFDqCBVznV-TtOuvOTT_v2FkvfK5J8pEG4KfTsSXytRsu2w1Xf8"/>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-[260px] mt-[64px] p-container-padding">
+<!-- Page Header -->
+<div class="mb-8">
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-1">Blocked IPs / Agent Response</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">IPs automatically blocked by the Sentinel Agent and enforcement middleware.</p>
+</div>
+<!-- Banner Message -->
+<div class="mb-8 bg-error-container/20 border border-error-container rounded-lg p-4 flex items-start gap-3">
+<span class="material-symbols-outlined text-error mt-0.5">info</span>
+<div>
+<h4 class="font-headline-md text-body-lg text-on-surface font-semibold mb-1">Middleware Enforcement Active</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">All active IPs listed below will receive immediate 403 Forbidden responses across all protected endpoints.</p>
+</div>
+</div>
+<!-- Bento Grid: Stat Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-8">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-container-padding shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Active Blocks</span>
+<span class="material-symbols-outlined text-error text-[20px]">block</span>
+</div>
+<div id="blocked-stat-active" class="font-display text-display text-on-surface">—</div>
+<div class="flex items-center gap-1 text-on-surface-variant mt-2">
+<span class="material-symbols-outlined text-[16px] text-tertiary-container">arrow_upward</span>
+<span class="font-body-sm text-body-sm">+2 in last hour</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-container-padding shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Recently Blocked</span>
+<span class="material-symbols-outlined text-on-primary-fixed-variant text-[20px]">history</span>
+</div>
+<div id="blocked-stat-recent" class="font-display text-display text-on-surface">—</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-2">Past 24 hours</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-container-padding shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Expiring Soon</span>
+<span class="material-symbols-outlined text-secondary text-[20px]">schedule</span>
+</div>
+<div id="blocked-stat-expiring" class="font-display text-display text-on-surface">—</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-2">Within next 6 hours</div>
+</div>
+</div>
+<!-- Data Table Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm overflow-hidden flex flex-col">
+<!-- Table Controls/Toolbar -->
+<div class="px-container-padding py-4 border-b border-surface-container-highest flex items-center justify-between bg-surface-bright">
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-2 px-3 py-1.5 rounded border border-outline-variant text-on-surface font-body-sm text-body-sm hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[16px]">filter_list</span>
+                        Filter
+                    </button>
+</div>
+<div id="blocked-count-label" class="font-body-sm text-body-sm text-on-surface-variant">
+                    Loading records…
+                </div>
+</div>
+<!-- Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-[900px]">
+<thead>
+<tr class="bg-surface-container-low border-b border-surface-container-highest">
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase">IP Address</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Prediction</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Confidence</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Agent Action</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Status</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Blocked At</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase text-right">Actions</th>
+</tr>
+</thead>
+<tbody id="blocked-ips-body" class="font-body-md text-body-md">
+<tr><td colspan="7" class="px-4 py-8 text-center text-on-surface-variant">Loading blocked IPs…</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/format.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/pages.js"></script>
+<script src="../js/init.js"></script>
+</body></html>
