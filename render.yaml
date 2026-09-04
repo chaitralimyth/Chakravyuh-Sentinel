@@ -1,0 +1,32 @@
+# Render Blueprint Configuration
+# This file is for reference - manual setup is recommended due to subdirectory structure
+
+# IMPORTANT: The backend is located in a subdirectory:
+# chakrahvyuh-sentinel/HANDOVER/HANDOVER/chakravyuh_backend
+# 
+# For deployment, it's recommended to use manual setup in Render dashboard
+# and specify the root directory as: chakrahvyuh-sentinel/HANDOVER/HANDOVER/chakravyuh_backend
+
+services:
+  - type: web
+    name: chakravyuh-sentinel-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: chakravyuh-db
+          property: connectionString
+      - key: SESSION_TIMEOUT_MINUTES
+        value: 30
+      - key: SESSION_EVAL_THRESHOLD
+        value: 5
+      - key: BLOCK_DURATION_MINUTES
+        value: 60
+      # IMPORTANT: Frontend URL: https://chakravyuh-sentinel.netlify.app/
+    healthCheckPath: /
+
+databases:
+  - name: chakravyuh-db
+    databaseName: chakravyuh_sentinel

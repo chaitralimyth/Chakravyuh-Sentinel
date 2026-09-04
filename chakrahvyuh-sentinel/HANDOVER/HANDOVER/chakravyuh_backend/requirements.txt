@@ -4,5 +4,6 @@ sqlalchemy>=2.0
 psycopg2-binary
 python-dotenv
 joblib
-scikit-learn
+scikit-learn==1.6.1
 httpx
+xgboost

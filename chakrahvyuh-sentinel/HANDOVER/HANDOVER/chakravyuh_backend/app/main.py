@@ -13,6 +13,7 @@ from app.database import init_db
 from app.security_middleware import IPBlockMiddleware
 from app.request_logging_middleware import RequestLoggingMiddleware
 from app.dashboard_routes import router as dashboard_router
+from app.config import ALLOWED_ORIGINS
 
 app = FastAPI(title="Chakravyuh Sentinel API")
 
@@ -21,7 +22,7 @@ app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(IPBlockMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

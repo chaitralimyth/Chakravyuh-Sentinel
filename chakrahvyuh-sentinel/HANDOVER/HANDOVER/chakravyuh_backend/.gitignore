@@ -26,3 +26,6 @@ htmlcov/
 
 # Logs
 *.log
+
+# ML Models (optional - uncomment if you want to exclude large model files)
+# models/*.pkl

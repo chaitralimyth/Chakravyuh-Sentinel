@@ -83,3 +83,22 @@ if BLOCK_DURATION_MINUTES <= 0:
     raise RuntimeError(
         "BLOCK_DURATION_MINUTES must be greater than 0."
     )
+
+
+# ---------------------------------------------------------
+# CORS Configuration
+# ---------------------------------------------------------
+
+# Comma-separated list of allowed origins for CORS.
+# Use "*" for development (unrestricted), or specific domains for production.
+# Example: "https://your-frontend.netlify.app,https://your-domain.com"
+# For local development: "http://localhost:3000,http://127.0.0.1:5500"
+
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*")
+
+if CORS_ORIGINS == "*":
+    # Development mode: allow all origins
+    ALLOWED_ORIGINS = ["*"]
+else:
+    # Production mode: parse comma-separated origins
+    ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ORIGINS.split(",") if origin.strip()]
