@@ -42,7 +42,7 @@ Due to the subdirectory structure of the project, manual setup in Render dashboa
      - `SESSION_TIMEOUT_MINUTES`: `30`
      - `SESSION_EVAL_THRESHOLD`: `5`
      - `BLOCK_DURATION_MINUTES`: `60`
-     - `CORS_ORIGINS`: `https://your-frontend.netlify.app` (UPDATE THIS)
+     - `CORS_ORIGINS`: `https://chakravyuh-sentinel.netlify.app,https://singhaman.me` (UPDATE THIS)
    - Click "Create Web Service"
 
 ### Step 3: Verify Deployment
@@ -52,7 +52,13 @@ Due to the subdirectory structure of the project, manual setup in Render dashboa
    ```bash
    curl https://your-api-url.onrender.com/stats
    ```
-4. Check that database tables are created automatically
+4. Test the new traffic ingestion endpoint:
+   ```bash
+   curl -X POST https://your-api-url.onrender.com/api/ingest-traffic \
+     -H "Content-Type: application/json" \
+     -d '{"ip":"192.168.1.100","method":"GET","endpoint":"/test","status_code":200,"timestamp":"2024-09-05T10:30:00Z"}'
+   ```
+5. Check that database tables are created automatically
 
 ### Step 4: Update Frontend Configuration
 1. Get your deployed backend URL from Render
