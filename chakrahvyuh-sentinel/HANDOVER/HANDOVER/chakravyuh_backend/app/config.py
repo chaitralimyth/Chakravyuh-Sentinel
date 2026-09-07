@@ -102,3 +102,6 @@ if CORS_ORIGINS == "*":
 else:
     # Production mode: parse comma-separated origins
     ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ORIGINS.split(",") if origin.strip()]
+    # Always ensure singhaman.me is included for the integration
+    if not any(origin.lower() == "https://singhaman.me" for origin in ALLOWED_ORIGINS):
+        ALLOWED_ORIGINS.append("https://singhaman.me")

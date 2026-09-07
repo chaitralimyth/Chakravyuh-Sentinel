@@ -16,7 +16,7 @@ services:
       - key: BLOCK_DURATION_MINUTES
         value: 60
       - key: CORS_ORIGINS
-        value: https://chakravyuh-sentinel.netlify.app
+        value: https://chakravyuh-sentinel.netlify.app,https://singhaman.me
     healthCheckPath: /
 
 databases:
