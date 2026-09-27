@@ -105,3 +105,21 @@ else:
     # Always ensure singhaman.me is included for the integration
     if not any(origin.lower() == "https://singhaman.me" for origin in ALLOWED_ORIGINS):
         ALLOWED_ORIGINS.append("https://singhaman.me")
+
+
+# ---------------------------------------------------------
+# Adaptive Agent Risk Thresholds
+# ---------------------------------------------------------
+
+# Policy ranges (0 to 100):
+#   0  to RISK_ALLOW_MAX             -> ALLOW (default: 0 to 29)
+#   RISK_MONITOR_MIN to RISK_MONITOR_MAX  -> MONITOR (default: 30 to 59)
+#   RISK_RATE_LIMIT_MIN to RISK_RATE_LIMIT_MAX -> RATE_LIMIT (default: 60 to 79)
+#   RISK_BLOCK_MIN to 100            -> BLOCK (default: 80 to 100)
+
+RISK_ALLOW_MAX = _get_int('RISK_ALLOW_MAX', 29)
+RISK_MONITOR_MIN = _get_int('RISK_MONITOR_MIN', 30)
+RISK_MONITOR_MAX = _get_int('RISK_MONITOR_MAX', 59)
+RISK_RATE_LIMIT_MIN = _get_int('RISK_RATE_LIMIT_MIN', 60)
+RISK_RATE_LIMIT_MAX = _get_int('RISK_RATE_LIMIT_MAX', 79)
+RISK_BLOCK_MIN = _get_int('RISK_BLOCK_MIN', 80)
