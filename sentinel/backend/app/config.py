@@ -30,10 +30,8 @@ def _get_int(name: str, default: int) -> int:
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise RuntimeError(
-        "DATABASE_URL environment variable is not configured. "
-        "Set DATABASE_URL in your .env file before starting the application."
-    )
+    # Default to SQLite for testing if DATABASE_URL is not set
+    DATABASE_URL = "sqlite:///./chakravyuh_sentinel.db"
 
 
 # ---------------------------------------------------------

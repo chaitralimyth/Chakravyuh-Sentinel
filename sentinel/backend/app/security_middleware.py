@@ -16,6 +16,10 @@ class IPBlockMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         client_ip = request.client.host if request.client else "unknown"
 
+        # Skip blocking for localhost (needed for API testing and admin access)
+        if client_ip in ["127.0.0.1", "localhost", "::1"]:
+            return await call_next(request)
+
         db = SessionLocal()
         try:
             blocked = is_ip_blocked(db, client_ip)

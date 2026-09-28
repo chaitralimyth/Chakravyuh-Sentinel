@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chakravyuh Sentinel - Attack Investigation Timeline</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #e94560;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .panel h2 {
+            color: #0f3460;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e94560;
+        }
+
+        .incident-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .incident-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid #0f3460;
+        }
+
+        .incident-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .incident-item.active {
+            background: rgba(233, 69, 96, 0.2);
+            border-left-color: #e94560;
+        }
+
+        .incident-item.blocked {
+            border-left-color: #e94560;
+        }
+
+        .incident-ip {
+            font-weight: bold;
+            color: #e94560;
+            margin-bottom: 5px;
+        }
+
+        .incident-info {
+            font-size: 0.9em;
+            color: #ccc;
+        }
+
+        .incident-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+
+        .status-active {
+            background: #4caf50;
+            color: white;
+        }
+
+        .status-blocked {
+            background: #e94560;
+            color: white;
+        }
+
+        .status-closed {
+            background: #ff9800;
+            color: white;
+        }
+
+        .timeline-container {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e94560;
+        }
+
+        .timeline-event {
+            position: relative;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-event:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .timeline-event::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 20px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e94560;
+            border: 2px solid #1a1a2e;
+        }
+
+        .timeline-event.critical::before {
+            background: #e94560;
+        }
+
+        .timeline-event.warning::before {
+            background: #ff9800;
+        }
+
+        .timeline-event.info::before {
+            background: #4caf50;
+        }
+
+        .event-timestamp {
+            font-size: 0.85em;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .event-type {
+            font-weight: bold;
+            color: #e94560;
+            margin-bottom: 5px;
+        }
+
+        .event-description {
+            color: #ccc;
+            margin-bottom: 5px;
+        }
+
+        .event-details {
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        .no-selection {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #e94560;
+        }
+
+        .error {
+            background: rgba(233, 69, 96, 0.2);
+            color: #e94560;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .session-info {
+            font-size: 0.9em;
+            color: #ccc;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ Chakravyuh Sentinel - Attack Investigation Timeline</h1>
+        
+        <div class="dashboard">
+            <div class="panel">
+                <h2>🚨 Security Incidents</h2>
+                <div id="incidentList" class="incident-list">
+                    <div class="loading">Loading incidents...</div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2>📋 Attack Timeline</h2>
+                <div id="timelineContainer" class="timeline-container">
+                    <div class="no-selection">
+                        Select an incident from the left to view its timeline
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedSessionId = null;
+
+        // Load incidents on page load
+        document.addEventListener('DOMContentLoaded', loadIncidents);
+
+        async function loadIncidents() {
+            try {
+                const response = await fetch('/api/incidents');
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                displayIncidents(data);
+            } catch (error) {
+                showError('Failed to load incidents: ' + error.message);
+            }
+        }
+
+        function displayIncidents(incidents) {
+            const container = document.getElementById('incidentList');
+            
+            if (!incidents || incidents.length === 0) {
+                container.innerHTML = '<div class="no-selection">No security incidents found</div>';
+                return;
+            }
+            
+            container.innerHTML = incidents.map(incident => `
+                <div class="incident-item ${incident.status === 'blocked' ? 'blocked' : ''}" 
+                     onclick="selectIncident('${incident.session_id}', this)">
+                    <div class="incident-ip">🌐 ${incident.ip}</div>
+                    <div class="incident-info">
+                        <div>Session ID: ${incident.session_id.substring(0, 8)}...</div>
+                        <div>Started: ${formatDate(incident.started_at)}</div>
+                        <div>Requests: ${incident.request_count}</div>
+                        <div>Duration: ${formatDuration(incident.duration_seconds)}</div>
+                    </div>
+                    <span class="incident-status status-${incident.status}">${incident.status.toUpperCase()}</span>
+                </div>
+            `).join('');
+        }
+
+        async function selectIncident(sessionId, element) {
+            // Update UI selection
+            document.querySelectorAll('.incident-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            element.classList.add('active');
+            
+            selectedSessionId = sessionId;
+            
+            // Load timeline
+            const container = document.getElementById('timelineContainer');
+            container.innerHTML = '<div class="loading">Loading timeline...</div>';
+            
+            try {
+                const response = await fetch(`/api/incidents/${sessionId}/timeline`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                displayTimeline(data);
+            } catch (error) {
+                showError('Failed to load timeline: ' + error.message);
+            }
+        }
+
+        function displayTimeline(timelineData) {
+            const container = document.getElementById('timelineContainer');
+            
+            if (!timelineData.timeline || timelineData.timeline.length === 0) {
+                container.innerHTML = '<div class="no-selection">No timeline events found for this session</div>';
+                return;
+            }
+            
+            const header = `
+                <div class="timeline-header">
+                    <div>
+                        <strong>Session:</strong> ${timelineData.session_id}<br>
+                        <strong>IP:</strong> ${timelineData.ip}
+                    </div>
+                    <div class="session-info">
+                        <strong>Status:</strong> ${timelineData.session_status.toUpperCase()}<br>
+                        <strong>Total Events:</strong> ${timelineData.total_events}
+                    </div>
+                </div>
+            `;
+            
+            const events = timelineData.timeline.map(event => `
+                <div class="timeline-event ${event.severity}">
+                    <div class="event-timestamp">${formatTimestamp(event.timestamp)}</div>
+                    <div class="event-type">${getEventIcon(event.event_type)} ${event.event_type}</div>
+                    <div class="event-description">${event.description}</div>
+                    ${event.endpoint ? `<div class="event-details">Endpoint: ${event.endpoint}</div>` : ''}
+                    ${event.status ? `<div class="event-details">Status: ${event.status}</div>` : ''}
+                    ${event.prediction ? `<div class="event-details">Prediction: ${event.prediction} (Confidence: ${(event.confidence * 100).toFixed(1)}%)</div>` : ''}
+                    ${event.blocked_until ? `<div class="event-details">Blocked until: ${formatTimestamp(event.blocked_until)}</div>` : ''}
+                </div>
+            `).join('');
+            
+            container.innerHTML = `
+                ${header}
+                <div class="timeline">
+                    ${events}
+                </div>
+            `;
+        }
+
+        function getEventIcon(eventType) {
+            const icons = {
+                'SESSION_START': '🚀',
+                'SESSION_END': '🏁',
+                'REQUEST': '📡',
+                'REQUEST_ERROR': '❌',
+                'ADMIN_ACCESS': '🔐',
+                'LOGIN_ATTEMPT': '🔑',
+                'SECURITY_ALERT': '⚠️',
+                'IP_BLOCKED': '🚫'
+            };
+            return icons[eventType] || '📋';
+        }
+
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return 'N/A';
+            const date = new Date(timestamp);
+            return date.toLocaleString();
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+
+        function formatDuration(seconds) {
+            if (!seconds) return '0s';
+            if (seconds < 60) return `${Math.round(seconds)}s`;
+            if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
+            return `${Math.round(seconds / 3600)}h`;
+        }
+
+        function showError(message) {
+            const container = document.getElementById('incidentList');
+            container.innerHTML = `<div class="error">${message}</div>`;
+        }
+    </script>
+</body>
+</html>
