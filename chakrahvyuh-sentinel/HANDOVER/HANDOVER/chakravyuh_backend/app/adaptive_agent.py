@@ -1,4 +1,4 @@
-﻿"""
+"""
 Deterministic Adaptive Security Agent for Chakravyuh Sentinel.
 
 This module acts as the security decision layer downstream of the
@@ -324,7 +324,12 @@ class AdaptiveSecurityAgent:
                         prediction=str(behavior_pred) if behavior_pred else None,
                         confidence=valid_confidence,
                         session_id=session_id,
+                        url_score=safe_context.get("url_score"),
+                        behavior_score=safe_context.get("behavior_score"),
+                        risk_score=float_score,
+                        severity=valid_severity,
                     )
+
 
                     blocked_until_iso = None
                     if hasattr(blocked_record, "blocked_until") and blocked_record.blocked_until:

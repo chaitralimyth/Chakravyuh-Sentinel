@@ -45,6 +45,10 @@ def list_alerts(
             "ip": a.ip,
             "prediction": a.prediction,
             "confidence": a.confidence,
+            "url_score": a.url_score,
+            "behavior_score": a.behavior_score,
+            "risk_score": a.risk_score,
+            "severity": a.severity,
             "action": a.action,
             "reason": a.reason,
             "created_at": _iso(a.created_at),
@@ -52,6 +56,7 @@ def list_alerts(
         }
         for a in alerts
     ]
+
 
 
 @router.get("/blocked-ips")

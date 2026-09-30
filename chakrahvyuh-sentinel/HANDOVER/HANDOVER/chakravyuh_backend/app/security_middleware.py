@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 from app.database import SessionLocal
 from app.blocking_service import is_ip_blocked
 
-# Dashboard and health endpoints must remain reachable even when the caller IP is blocked.
+# Dashboard, health, and incident endpoints must remain reachable even when the caller IP is blocked.
 _EXEMPT_PATHS = {
     "/",
     "/stats",
@@ -21,6 +21,7 @@ _EXEMPT_PATHS = {
     "/blocked-ips",
     "/requests",
     "/sessions",
+    "/incidents",
     "/docs",
     "/redoc",
     "/openapi.json",
@@ -30,10 +31,14 @@ _EXEMPT_PATHS = {
 class IPBlockMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
-        if path in _EXEMPT_PATHS or path.startswith("/docs"):
+        if path in _EXEMPT_PATHS or path.startswith(("/docs", "/incidents")):
             return await call_next(request)
 
         client_ip = request.client.host if request.client else "unknown"
+
+        # Skip blocking for localhost during local development/testing
+        if client_ip in ["127.0.0.1", "localhost", "::1"]:
+            return await call_next(request)
 
         db = SessionLocal()
         try:

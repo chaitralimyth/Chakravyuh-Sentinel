@@ -1,21 +1,15 @@
 """
-Deterministic behavior decision layer.
+Behavior ML prediction and detection layer.
 
-This module belongs ONLY to the behavior ML pipeline.
+The behavior model classifies session feature vectors:
+    0 -> attacker
+    1 -> normal
 
-It does NOT replace or modify app/agent.py,
-which belongs to the existing URL ML pipeline.
-
-No LLM.
-No reinforcement learning.
-No heuristic URL blocking.
-
-The behavior model's decoded prediction determines the action:
-
-attacker -> BLOCK
-normal   -> ALLOW
+Behavior ML detects threat signals and calculates attack probabilities.
+The final security policy decision is determined by the Adaptive Security Agent.
 """
 
+from typing import Optional
 from app.behavior_model_loader import (
     behavior_model,
     behavior_label_encoder,
@@ -23,22 +17,19 @@ from app.behavior_model_loader import (
     BEHAVIOR_MODEL_SUPPORTS_PROBA,
 )
 
-
 EXPECTED_FEATURE_COUNT = 28
+ATTACKER_LABEL = 0
+NORMAL_LABEL = 1
 
 
 def decide_behavior(
     prediction_label: str,
-    confidence: float | None,
+    confidence: Optional[float],
 ) -> dict:
     """
-    Convert the decoded behavior model prediction into
-    a deterministic security decision.
-
-    attacker -> BLOCK
-    normal   -> ALLOW
+    Legacy helper: convert the decoded behavior model prediction into a decision dict.
+    Maintained for backward compatibility.
     """
-
     if prediction_label == "attacker":
         return {
             "prediction": "attacker",
@@ -56,87 +47,62 @@ def decide_behavior(
         }
 
     raise ValueError(
-        f"Unexpected behavior model label: {prediction_label!r}. "
-        "Expected 'attacker' or 'normal'."
+        f"Unexpected behavior model label: {prediction_label!r}. Expected 'attacker' or 'normal'."
     )
 
 
 def run_behavior_prediction(feature_vector: list) -> dict:
     """
-    Run the behavior ML pipeline:
-
-    feature vector
-        ↓
-    RandomForest model
-        ↓
-    numeric prediction
-        ↓
-    label encoder
-        ↓
-    attacker / normal
-        ↓
-    deterministic behavior decision
+    Run the behavior ML prediction pipeline:
+    Validates the 28-feature vector, generates predictions, and computes
+    continuous attack probability and confidence for the Dynamic Risk Engine.
     """
-
-    # ---------------------------------------------------------
-    # Validate feature vector
-    # ---------------------------------------------------------
-
     if len(feature_vector) != EXPECTED_FEATURE_COUNT:
         raise ValueError(
-            "Behavior feature vector must contain exactly "
-            f"{EXPECTED_FEATURE_COUNT} values, but received "
-            f"{len(feature_vector)}."
+            f"Behavior feature vector must contain exactly {EXPECTED_FEATURE_COUNT} values, but received {len(feature_vector)}."
         )
 
     if len(feature_vector) != len(behavior_feature_order):
         raise ValueError(
-            "Behavior feature vector length does not match "
-            "feature_columns_behaviour.pkl: "
-            f"vector={len(feature_vector)}, "
-            f"feature_order={len(behavior_feature_order)}."
+            f"Behavior feature vector length ({len(feature_vector)}) does not match feature_columns_behaviour.pkl ({len(behavior_feature_order)})."
         )
 
-    # ---------------------------------------------------------
-    # Run RandomForest prediction
-    # ---------------------------------------------------------
+    numeric_prediction = int(behavior_model.predict([feature_vector])[0])
 
-    numeric_prediction = behavior_model.predict(
-        [feature_vector]
-    )[0]
-
-    # ---------------------------------------------------------
-    # Decode numeric prediction
-    # ---------------------------------------------------------
-
-    prediction_label = behavior_label_encoder.inverse_transform(
-        [numeric_prediction]
-    )[0]
-
-    # ---------------------------------------------------------
-    # Calculate confidence
-    # ---------------------------------------------------------
-
-    confidence = None
+    prediction_confidence = None
+    attack_probability = None
 
     if BEHAVIOR_MODEL_SUPPORTS_PROBA:
-        probabilities = behavior_model.predict_proba(
-            [feature_vector]
-        )[0]
+        probabilities = behavior_model.predict_proba([feature_vector])[0]
+        classes = list(behavior_model.classes_)
 
-        class_index = list(
-            behavior_model.classes_
-        ).index(numeric_prediction)
+        # Class 0 = attacker
+        if ATTACKER_LABEL in classes:
+            attacker_index = classes.index(ATTACKER_LABEL)
+            attack_probability = float(probabilities[attacker_index])
 
-        confidence = float(
-            probabilities[class_index]
-        )
+        # Confidence for the predicted class
+        if numeric_prediction in classes:
+            predicted_index = classes.index(numeric_prediction)
+            prediction_confidence = float(probabilities[predicted_index])
 
-    # ---------------------------------------------------------
-    # Deterministic agent decision
-    # ---------------------------------------------------------
+    if numeric_prediction == ATTACKER_LABEL:
+        prediction = "attacker"
+    elif numeric_prediction == NORMAL_LABEL:
+        prediction = "normal"
+    else:
+        # Fallback to label encoder if unexpected numeric value
+        prediction = str(behavior_label_encoder.inverse_transform([numeric_prediction])[0])
 
-    return decide_behavior(
-        str(prediction_label),
-        confidence,
-    )
+    # If attack_probability was not computed from proba, estimate from prediction
+    if attack_probability is None:
+        attack_probability = 1.0 if prediction == "attacker" else 0.0
+
+    return {
+        "prediction": prediction,
+        "prediction_value": numeric_prediction,
+        "confidence": prediction_confidence,
+        "attack_probability": attack_probability,
+        "action": "BLOCK" if prediction == "attacker" else "ALLOW",
+        "reason": f"Session behavior classified as {prediction}",
+    }

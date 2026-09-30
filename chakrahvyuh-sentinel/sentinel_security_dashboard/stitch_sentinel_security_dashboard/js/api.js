@@ -41,4 +41,30 @@ window.SentinelAPI = {
   getSessions(params) {
     return this.get("/sessions", params);
   },
+
+  getIncidents() {
+    return this.get("/incidents");
+  },
+
+  getTimeline(sessionId) {
+    return this.get(`/incidents/${encodeURIComponent(sessionId)}/timeline`);
+  },
+
+  getExplanation(incidentId) {
+    return this.get(`/incidents/${encodeURIComponent(incidentId)}/explanation`);
+  },
+
+  closeIncident(incidentId) {
+    return fetch(`${this.base()}/incidents/${encodeURIComponent(incidentId)}/close`, {
+      method: "PATCH",
+    }).then((r) => r.json());
+  },
+
+  getSeverityStats() {
+    return this.get("/stats/severity");
+  },
+
+  getActionStats() {
+    return this.get("/stats/actions");
+  },
 };

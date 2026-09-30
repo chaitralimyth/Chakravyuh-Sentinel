@@ -96,7 +96,32 @@ class SecurityAlert(Base):
     ip = Column(String(64), nullable=False, index=True)
     prediction = Column(String(32), nullable=True)
     confidence = Column(Float, nullable=True)
-    action = Column(String(16), nullable=False)  # BLOCK / ALLOW (only BLOCK is written today)
+    url_score = Column(Float, nullable=True)
+    behavior_score = Column(Float, nullable=True)
+    risk_score = Column(Float, nullable=True)
+    severity = Column(String(16), nullable=True)  # LOW / MEDIUM / HIGH / CRITICAL
+    action = Column(String(16), nullable=False)  # BLOCK / MONITOR / RATE_LIMIT / ALLOW
     reason = Column(String(255), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     is_read = Column(Boolean, default=False, nullable=False)
+
+
+class SecurityIncident(Base):
+    """Correlated security incident aggregating alerts by session or IP."""
+
+    __tablename__ = "security_incidents"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    incident_key = Column(String(255), unique=True, index=True, nullable=False)
+    session_id = Column(String(32), ForeignKey("sessions.session_id"), index=True, nullable=True)
+    ip = Column(String(64), index=True, nullable=False)
+    status = Column(String(50), default="OPEN", nullable=False)
+    severity = Column(String(50), default="LOW", nullable=False)
+    primary_action = Column(String(50), default="MONITOR", nullable=False)
+    risk_score = Column(Float, default=0.0, nullable=False)
+    event_count = Column(Integer, default=0, nullable=False)
+    summary = Column(Text, nullable=True)
+    first_seen = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    last_seen = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

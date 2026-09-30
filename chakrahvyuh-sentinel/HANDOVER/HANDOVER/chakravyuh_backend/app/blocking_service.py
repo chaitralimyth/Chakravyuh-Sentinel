@@ -47,6 +47,10 @@ def block_ip(
     prediction: str | None = None,
     confidence: float | None = None,
     session_id: str | None = None,
+    url_score: float | None = None,
+    behavior_score: float | None = None,
+    risk_score: float | None = None,
+    severity: str | None = None,
 ) -> BlockedIP:
     now = datetime.now(timezone.utc)
     blocked_until = now + timedelta(minutes=BLOCK_DURATION_MINUTES)
@@ -104,6 +108,10 @@ def block_ip(
         confidence=confidence,
         action="BLOCK",
         reason=reason,
+        url_score=url_score,
+        behavior_score=behavior_score,
+        risk_score=risk_score,
+        severity=severity,
     )
 
     return block

@@ -32,9 +32,7 @@ from app.database import SessionLocal
 from app.db_models import RequestLog
 from app.session_builder import get_or_create_session, touch_session
 from app.config import SESSION_EVAL_THRESHOLD
-from app.behavior_feature_extractor import build_feature_vector
-from app.behavior_agent import run_behavior_prediction
-from app.blocking_service import block_ip
+from app.security_pipeline import evaluate_session_security
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -93,28 +91,12 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             session = touch_session(db, session)
 
             if session.request_count > 0 and session.request_count % SESSION_EVAL_THRESHOLD == 0:
-                rows = (
-                    db.query(RequestLog)
-                    .filter(RequestLog.session_id == session.session_id)
-                    .order_by(RequestLog.timestamp.asc())
-                    .all()
+                evaluate_session_security(
+                    db=db,
+                    session=session,
+                    client_ip=client_ip,
+                    current_url=request.url.path,
                 )
-                feature_vector = build_feature_vector(rows)
-                decision = run_behavior_prediction(feature_vector)
-
-                if decision["action"] == "BLOCK":
-                    session.status = "blocked"
-                    db.add(session)
-                    db.commit()
-
-                    block_ip(
-                        db,
-                        ip=client_ip,
-                        reason=decision["reason"],
-                        prediction=decision["prediction"],
-                        confidence=decision["confidence"],
-                        session_id=session.session_id,
-                    )
         finally:
             db.close()
 
