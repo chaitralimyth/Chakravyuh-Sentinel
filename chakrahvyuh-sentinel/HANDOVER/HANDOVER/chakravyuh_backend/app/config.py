@@ -122,3 +122,28 @@ RISK_MONITOR_MAX = _get_int('RISK_MONITOR_MAX', 59)
 RISK_RATE_LIMIT_MIN = _get_int('RISK_RATE_LIMIT_MIN', 60)
 RISK_RATE_LIMIT_MAX = _get_int('RISK_RATE_LIMIT_MAX', 79)
 RISK_BLOCK_MIN = _get_int('RISK_BLOCK_MIN', 80)
+
+
+# ---------------------------------------------------------
+# Rate Limiting Configuration
+# ---------------------------------------------------------
+
+# Rate limiting: maximum requests per time window per IP
+RATE_LIMIT_REQUESTS = _get_int('RATE_LIMIT_REQUESTS', 100)
+
+# Time window in seconds for rate limiting
+RATE_LIMIT_WINDOW_SECONDS = _get_int('RATE_LIMIT_WINDOW_SECONDS', 60)
+
+# Rate limiting: burst capacity (allows short bursts above normal rate)
+RATE_LIMIT_BURST = _get_int('RATE_LIMIT_BURST', 20)
+
+# Paths exempt from rate limiting (health checks, docs, etc.)
+RATE_LIMIT_EXEMPT_PATHS = {
+    "/",
+    "/health",
+    "/docs",
+    "/redoc",
+    "/openapi.json",
+    "/stats",
+    "/statistics",
+}

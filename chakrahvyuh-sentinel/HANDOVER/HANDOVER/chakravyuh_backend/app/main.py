@@ -17,9 +17,10 @@ from app.utils import track_ip
 from app.database import init_db, SessionLocal, get_db
 from app.security_middleware import IPBlockMiddleware
 from app.request_logging_middleware import RequestLoggingMiddleware
+from app.rate_limit_middleware import RateLimitMiddleware
 from app.dashboard_routes import router as dashboard_router
 from app.config import ALLOWED_ORIGINS, SESSION_EVAL_THRESHOLD
-from app.db_models import RequestLog, SessionRecord, SecurityAlert, BlockedIP, SecurityIncident
+from app.db_models import RequestLog, SessionRecord, SecurityAlert, BlockedIP, SecurityIncident, RateLimitEvent
 from app.session_builder import get_or_create_session, touch_session
 from app.security_pipeline import evaluate_session_security
 from app.incident_service import get_incident, close_incident, get_incidents
@@ -28,8 +29,10 @@ from app.explanation_service import generate_incident_explanation
 app = FastAPI(title="Chakravyuh Sentinel API")
 
 # Middleware: innermost first, CORS outermost (handles OPTIONS preflight)
+# Order: RequestLogging -> IPBlock -> RateLimit -> CORS
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(IPBlockMiddleware)
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -460,3 +463,87 @@ def get_action_statistics(db: Session = Depends(get_db)):
         if key in result:
             result[key] = count
     return result
+
+
+# ============================================================
+# RATE LIMITING ENDPOINTS
+# ============================================================
+
+@app.get("/rate-limit/stats")
+def get_rate_limit_stats(db: Session = Depends(get_db)):
+    """Get rate limiting statistics and recent violations."""
+    # Count total violations
+    total_violations = db.query(RateLimitEvent).count()
+    
+    # Get recent violations (last 100)
+    recent_violations = (
+        db.query(RateLimitEvent)
+        .order_by(RateLimitEvent.created_at.desc())
+        .limit(100)
+        .all()
+    )
+    
+    # Count violations by IP
+    violations_by_ip = (
+        db.query(RateLimitEvent.ip, func.count(RateLimitEvent.id))
+        .group_by(RateLimitEvent.ip)
+        .order_by(func.count(RateLimitEvent.id).desc())
+        .limit(10)
+        .all()
+    )
+    
+    return {
+        "total_violations": total_violations,
+        "recent_violations": [
+            {
+                "ip": v.ip,
+                "endpoint": v.endpoint,
+                "method": v.method,
+                "request_count": v.request_count,
+                "limit": v.limit,
+                "window_seconds": v.window_seconds,
+                "burst_used": v.burst_used,
+                "created_at": v.created_at.isoformat() if v.created_at else None
+            }
+            for v in recent_violations
+        ],
+        "top_offenders": [
+            {"ip": ip, "violation_count": count}
+            for ip, count in violations_by_ip
+        ]
+    }
+
+
+@app.get("/rate-limit/stats/{ip}")
+def get_ip_rate_limit_stats(ip: str, db: Session = Depends(get_db)):
+    """Get rate limit statistics for a specific IP."""
+    violations = (
+        db.query(RateLimitEvent)
+        .filter(RateLimitEvent.ip == ip)
+        .order_by(RateLimitEvent.created_at.desc())
+        .limit(50)
+        .all()
+    )
+    
+    total_count = (
+        db.query(RateLimitEvent)
+        .filter(RateLimitEvent.ip == ip)
+        .count()
+    )
+    
+    return {
+        "ip": ip,
+        "total_violations": total_count,
+        "recent_violations": [
+            {
+                "endpoint": v.endpoint,
+                "method": v.method,
+                "request_count": v.request_count,
+                "limit": v.limit,
+                "window_seconds": v.window_seconds,
+                "burst_used": v.burst_used,
+                "created_at": v.created_at.isoformat() if v.created_at else None
+            }
+            for v in violations
+        ]
+    }

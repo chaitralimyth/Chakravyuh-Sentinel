@@ -125,3 +125,23 @@ class SecurityIncident(Base):
     last_seen = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class RateLimitEvent(Base):
+    """Track rate limit violations for monitoring and analytics."""
+
+    __tablename__ = "rate_limit_events"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ip = Column(String(64), nullable=False, index=True)
+    endpoint = Column(String(512), nullable=False)
+    method = Column(String(10), nullable=False)
+    request_count = Column(Integer, nullable=False)  # Number of requests in the window
+    window_seconds = Column(Integer, nullable=False)  # Time window in seconds
+    limit = Column(Integer, nullable=False)  # The rate limit that was exceeded
+    burst_used = Column(Boolean, default=False, nullable=False)  # Whether burst capacity was used
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        Index("ix_rate_limit_events_ip_created", "ip", "created_at"),
+    )
