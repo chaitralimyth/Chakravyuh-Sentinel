@@ -1,391 +1,311 @@
 <!DOCTYPE html>
-
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Security Alerts - Chakravyuh Sentinel</title>
-<!-- Material Symbols -->
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<!-- Tailwind CSS -->
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script id="tailwind-config">
-        tailwind.config = {
-          darkMode: "class",
-          theme: {
-            extend: {
-              "colors": {
-                      "surface-tint": "#565e74",
-                      "on-secondary-fixed-variant": "#004395",
-                      "secondary-container": "#2170e4",
-                      "on-tertiary": "#ffffff",
-                      "on-secondary-container": "#fefcff",
-                      "tertiary-fixed": "#89f5e7",
-                      "tertiary": "#000000",
-                      "error": "#ba1a1a",
-                      "primary-fixed-dim": "#bec6e0",
-                      "secondary-fixed-dim": "#adc6ff",
-                      "primary-fixed": "#dae2fd",
-                      "on-tertiary-container": "#0c9488",
-                      "on-secondary": "#ffffff",
-                      "primary-container": "#131b2e",
-                      "on-secondary-fixed": "#001a42",
-                      "surface-container-lowest": "#ffffff",
-                      "on-primary-fixed": "#131b2e",
-                      "on-primary": "#ffffff",
-                      "on-surface": "#191c1e",
-                      "secondary": "#0058be",
-                      "on-tertiary-fixed-variant": "#005049",
-                      "surface-dim": "#d8dadc",
-                      "tertiary-fixed-dim": "#6bd8cb",
-                      "on-error": "#ffffff",
-                      "background": "#f7f9fb",
-                      "surface-container-high": "#e6e8ea",
-                      "on-primary-container": "#7c839b",
-                      "surface-container": "#eceef0",
-                      "primary": "#000000",
-                      "surface-variant": "#e0e3e5",
-                      "outline": "#76777d",
-                      "secondary-fixed": "#d8e2ff",
-                      "on-error-container": "#93000a",
-                      "on-tertiary-fixed": "#00201d",
-                      "on-surface-variant": "#45464d",
-                      "surface-container-highest": "#e0e3e5",
-                      "tertiary-container": "#00201d",
-                      "outline-variant": "#c6c6cd",
-                      "on-background": "#191c1e",
-                      "surface-container-low": "#f2f4f6",
-                      "on-primary-fixed-variant": "#3f465c",
-                      "surface-bright": "#f7f9fb",
-                      "error-container": "#ffdad6",
-                      "inverse-surface": "#2d3133",
-                      "surface": "#f7f9fb",
-                      "inverse-primary": "#bec6e0",
-                      "inverse-on-surface": "#eff1f3"
-              },
-              "borderRadius": {
-                      "DEFAULT": "0.25rem",
-                      "lg": "0.5rem",
-                      "xl": "0.75rem",
-                      "full": "9999px"
-              },
-              "spacing": {
-                      "unit": "4px",
-                      "gutter": "16px",
-                      "sidebar-width": "260px",
-                      "container-padding": "24px",
-                      "component-gap": "12px"
-              },
-              "fontFamily": {
-                      "headline-md": [
-                              "Inter"
-                      ],
-                      "headline-lg": [
-                              "Inter"
-                      ],
-                      "body-md": [
-                              "Inter"
-                      ],
-                      "display": [
-                              "Inter"
-                      ],
-                      "label-caps": [
-                              "Inter"
-                      ],
-                      "body-lg": [
-                              "Inter"
-                      ],
-                      "data-mono": [
-                              "JetBrains Mono"
-                      ],
-                      "body-sm": [
-                              "Inter"
-                      ]
-              },
-              "fontSize": {
-                      "headline-md": [
-                              "20px",
-                              {
-                                      "lineHeight": "28px",
-                                      "fontWeight": "600"
-                              }
-                      ],
-                      "headline-lg": [
-                              "28px",
-                              {
-                                      "lineHeight": "36px",
-                                      "letterSpacing": "-0.01em",
-                                      "fontWeight": "600"
-                              }
-                      ],
-                      "body-md": [
-                              "14px",
-                              {
-                                      "lineHeight": "20px",
-                                      "fontWeight": "400"
-                              }
-                      ],
-                      "display": [
-                              "36px",
-                              {
-                                      "lineHeight": "44px",
-                                      "letterSpacing": "-0.02em",
-                                      "fontWeight": "700"
-                              }
-                      ],
-                      "label-caps": [
-                              "11px",
-                              {
-                                      "lineHeight": "16px",
-                                      "letterSpacing": "0.05em",
-                                      "fontWeight": "600"
-                              }
-                      ],
-                      "body-lg": [
-                              "16px",
-                              {
-                                      "lineHeight": "24px",
-                                      "fontWeight": "400"
-                              }
-                      ],
-                      "data-mono": [
-                              "13px",
-                              {
-                                      "lineHeight": "18px",
-                                      "fontWeight": "450"
-                              }
-                      ],
-                      "body-sm": [
-                              "12px",
-                              {
-                                      "lineHeight": "16px",
-                                      "fontWeight": "400"
-                              }
-                      ]
-              }
-            },
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Security Alerts — Chakravyuh Sentinel</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
           }
         }
-    </script>
+      }
+    };
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
+    .nav-item-active { background-color: #1e293b; color: #ffffff !important; border-left: 4px solid #38bdf8; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20; }
+  </style>
 </head>
-<body class="bg-background text-on-background min-h-screen font-body-md text-body-md overflow-x-hidden" data-page="alerts">
-<!-- Top AppBar -->
-<header class="bg-surface dark:bg-surface text-primary dark:text-primary-fixed-dim font-headline-md text-headline-md font-body-md text-body-md h-16 fixed top-0 right-0 z-30 border-b border-outline-variant dark:border-outline-variant flex items-center justify-between px-gutter ml-[260px] w-[calc(100%-260px)] hidden md:flex">
-<!-- Left Side: Search Bar & Product Name -->
-<div class="flex items-center gap-component-gap">
-<span class="font-headline-md text-headline-md font-semibold text-on-surface dark:text-on-surface ml-4">Chakravyuh Sentinel</span>
-</div>
-<!-- Center: Search -->
-<div class="flex-1 max-w-md mx-8 relative">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant w-4 h-4 text-[20px]" data-icon="search" style="font-variation-settings: 'FILL' 0;">search</span>
-<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-DEFAULT py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/10 transition-colors" placeholder="Search..." type="text"/>
-</div>
-<!-- Right Side: Actions -->
-<div class="flex items-center gap-4">
-<button class="p-2 text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors scale-95 active:scale-90 transition-transform">
-<span class="material-symbols-outlined" data-icon="notifications" style="font-variation-settings: 'FILL' 0;">notifications</span>
-</button>
-<button class="p-2 text-on-surface-variant hover:text-secondary dark:hover:text-secondary-fixed transition-colors scale-95 active:scale-90 transition-transform">
-<span class="material-symbols-outlined" data-icon="settings" style="font-variation-settings: 'FILL' 0;">settings</span>
-</button>
-<div class="h-8 w-8 rounded-full bg-primary-fixed-dim overflow-hidden border border-outline-variant flex-shrink-0 cursor-pointer ml-2">
-<img alt="Admin User" class="w-full h-full object-cover" data-alt="Professional headshot of a cybersecurity analyst, neutral background, bright light mode aesthetic, sharp focus, corporate style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7cRgualMhGZUIVqOl13NUGzYEAjFNLRJBGNovIaKMmGro4mJCytH-hGWdmsUHnbKtkw6hFJ5HmZhoBVdJxk4xljdbt9YKAajUu2e3ti36221bxGfW3UZVp7wpUnr3BCOOriKWPuwz_mku2vr5cOmIqMRUIhzJ56EDKeuNOpwe-OwabjOp8iAbok-q4BK3zo5HJ7BAvQE0beAQb276_PH3ejUPlh9loh4gOy5uozVrdhksIeMplp3n"/>
-</div>
-</div>
-</header>
-<!-- Side NavBar -->
-<nav class="bg-primary-container dark:bg-primary-container text-secondary dark:text-secondary-fixed-dim w-sidebar-width h-screen fixed left-0 top-0 border-r border-outline-variant dark:border-outline-variant flex flex-col h-full w-[260px] fixed z-40 hidden md:flex">
-<!-- Brand / Header -->
-<div class="px-gutter py-6 flex items-center gap-3 border-b border-surface-tint/20">
-<div class="w-10 h-10 rounded-DEFAULT bg-secondary-container flex items-center justify-center shrink-0">
-<span class="material-symbols-outlined text-on-secondary-container" data-icon="shield" style="font-variation-settings: 'FILL' 1;">shield</span>
-</div>
-<div class="flex flex-col">
-<span class="font-headline-lg text-headline-lg font-bold text-on-primary dark:text-on-primary text-[20px] leading-tight">Chakravyuh</span>
-<span class="font-label-caps text-label-caps text-on-primary-container">Sentinel</span>
-</div>
-</div>
-<!-- Main Navigation -->
-<div class="flex-1 overflow-y-auto py-4 flex flex-col gap-1">
-<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 hover:bg-surface-variant/20 dark:hover:bg-surface-variant/10 transition-colors duration-200 cursor-pointer active:opacity-80 transition-all font-label-caps text-label-caps" data-nav="dashboard" href="#">
-<span class="material-symbols-outlined" data-icon="dashboard" style="font-variation-settings: 'FILL' 0;">dashboard</span>
-<span class="font-body-md text-body-md">Dashboard</span>
-</a>
-<!-- ACTIVE ITEM -->
-<a class="flex items-center gap-component-gap bg-secondary-container text-on-secondary-container border-l-4 border-secondary px-gutter py-3 hover:bg-surface-variant/20 dark:hover:bg-surface-variant/10 transition-colors duration-200 cursor-pointer active:opacity-80 transition-all font-label-caps text-label-caps" data-nav="alerts" href="#">
-<span class="material-symbols-outlined" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span>
-<span class="font-body-md text-body-md font-medium">Security Alerts</span>
-</a>
-<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 hover:bg-surface-variant/20 dark:hover:bg-surface-variant/10 transition-colors duration-200 cursor-pointer active:opacity-80 transition-all font-label-caps text-label-caps" data-nav="blocked-ips" href="#">
-<span class="material-symbols-outlined" data-icon="block" style="font-variation-settings: 'FILL' 0;">block</span>
-<span class="font-body-md text-body-md">Blocked IPs</span>
-</a>
-<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 hover:bg-surface-variant/20 dark:hover:bg-surface-variant/10 transition-colors duration-200 cursor-pointer active:opacity-80 transition-all font-label-caps text-label-caps" data-nav="requests" href="#">
-<span class="material-symbols-outlined" data-icon="swap_horiz" style="font-variation-settings: 'FILL' 0;">swap_horiz</span>
-<span class="font-body-md text-body-md">Requests</span>
-</a>
-<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 hover:bg-surface-variant/20 dark:hover:bg-surface-variant/10 transition-colors duration-200 cursor-pointer active:opacity-80 transition-all font-label-caps text-label-caps" data-nav="sessions" href="#">
-<span class="material-symbols-outlined" data-icon="history" style="font-variation-settings: 'FILL' 0;">history</span>
-<span class="font-body-md text-body-md">Sessions</span>
-</a>
-<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 hover:bg-surface-variant/20 dark:hover:bg-surface-variant/10 transition-colors duration-200 cursor-pointer active:opacity-80 transition-all font-label-caps text-label-caps" data-nav="analytics" href="#">
-<span class="material-symbols-outlined" data-icon="analytics" style="font-variation-settings: 'FILL' 0;">analytics</span>
-<span class="font-body-md text-body-md">Security Analytics</span>
-</a>
-<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 px-gutter py-3 hover:bg-surface-variant/20 dark:hover:bg-surface-variant/10 transition-colors duration-200 cursor-pointer active:opacity-80 transition-all font-label-caps text-label-caps" href="#">
-<span class="material-symbols-outlined" data-icon="settings" style="font-variation-settings: 'FILL' 0;">settings</span>
-<span class="font-body-md text-body-md">Settings</span>
-</a>
-</div>
-<!-- CTA & Footer -->
-<div class="mt-auto px-gutter py-4 border-t border-surface-tint/20 flex flex-col gap-4">
-<div class="flex items-center justify-between text-on-tertiary-container bg-tertiary-container/10 px-3 py-2 rounded-DEFAULT border border-tertiary-container/20">
-<div class="flex items-center gap-2">
-<div class="w-2 h-2 rounded-full bg-tertiary-fixed animate-pulse"></div>
-<span class="font-label-caps text-label-caps text-xs">Security Engine Online</span>
-</div>
-</div>
-<a class="flex items-center gap-component-gap text-on-primary-container hover:bg-surface-variant/10 p-2 -mx-2 rounded-DEFAULT hover:bg-surface-variant/20 dark:hover:bg-surface-variant/10 transition-colors duration-200 cursor-pointer active:opacity-80 transition-all" href="#">
-<span class="material-symbols-outlined" data-icon="account_circle" style="font-variation-settings: 'FILL' 0;">account_circle</span>
-<span class="font-body-md text-body-md">Admin Profile</span>
-</a>
-</div>
-</nav>
-<!-- Main Content Canvas -->
-<main class="md:ml-[260px] pt-16 min-h-screen p-container-padding pb-24">
-<!-- Header -->
-<div class="mb-8">
-<h1 class="font-display text-display text-on-surface mb-2">Security Alerts</h1>
-<p class="font-body-lg text-body-lg text-on-surface-variant">Monitor suspicious behavior detected by Chakravyuh Sentinel.</p>
-</div>
-<!-- Summary Cards (Bento Grid Style) -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-component-gap mb-8">
-<!-- Card 1 -->
-<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 flex flex-col gap-2 relative overflow-hidden group hover:border-secondary transition-colors">
-<div class="flex justify-between items-start">
-<span class="font-label-caps text-label-caps text-on-surface-variant">Total Alerts</span>
-<div class="w-8 h-8 rounded-DEFAULT bg-primary-fixed flex items-center justify-center text-primary">
-<span class="material-symbols-outlined text-[18px]" data-icon="notifications" style="font-variation-settings: 'FILL' 1;">notifications</span>
-</div>
-</div>
-<div id="alert-stat-total" class="font-headline-lg text-headline-lg text-on-surface mt-2">—</div>
-<div class="flex items-center gap-1 text-on-tertiary-container mt-1">
-<span class="material-symbols-outlined text-[14px]" data-icon="trending_up">trending_up</span>
-<span class="font-body-sm text-body-sm">+12% vs last week</span>
-</div>
-<div class="absolute bottom-0 left-0 h-1 w-full bg-surface-variant">
-<div class="h-full bg-primary w-[75%]"></div>
-</div>
-</div>
-<!-- Card 2 -->
-<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 flex flex-col gap-2 relative overflow-hidden group hover:border-error transition-colors">
-<div class="flex justify-between items-start">
-<span class="font-label-caps text-label-caps text-on-surface-variant">Attacker Alerts</span>
-<div class="w-8 h-8 rounded-DEFAULT bg-error-container flex items-center justify-center text-on-error-container">
-<span class="material-symbols-outlined text-[18px]" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span>
-</div>
-</div>
-<div id="alert-stat-attacker" class="font-headline-lg text-headline-lg text-error mt-2">—</div>
-<div class="flex items-center gap-1 text-error mt-1">
-<span class="material-symbols-outlined text-[14px]" data-icon="priority_high">priority_high</span>
-<span class="font-body-sm text-body-sm">Requires immediate action</span>
-</div>
-</div>
-<!-- Card 3 -->
-<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 flex flex-col gap-2 relative overflow-hidden group hover:border-tertiary-fixed-dim transition-colors">
-<div class="flex justify-between items-start">
-<span class="font-label-caps text-label-caps text-on-surface-variant">Blocks</span>
-<div class="w-8 h-8 rounded-DEFAULT bg-surface-container-high flex items-center justify-center text-on-surface">
-<span class="material-symbols-outlined text-[18px]" data-icon="block" style="font-variation-settings: 'FILL' 1;">block</span>
-</div>
-</div>
-<div id="alert-stat-blocks" class="font-headline-lg text-headline-lg text-on-surface mt-2">—</div>
-<div class="flex items-center gap-1 text-on-surface-variant mt-1">
-<span class="material-symbols-outlined text-[14px]" data-icon="shield">shield</span>
-<span class="font-body-sm text-body-sm">Auto-mitigation active</span>
-</div>
-</div>
-<!-- Card 4 -->
-<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 flex flex-col gap-2 relative overflow-hidden group hover:border-secondary transition-colors">
-<div class="flex justify-between items-start">
-<span class="font-label-caps text-label-caps text-on-surface-variant">Unread Alerts</span>
-<div class="w-8 h-8 rounded-DEFAULT bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed">
-<span class="material-symbols-outlined text-[18px]" data-icon="mark_email_unread" style="font-variation-settings: 'FILL' 1;">mark_email_unread</span>
-</div>
-</div>
-<div id="alert-stat-unread" class="font-headline-lg text-headline-lg text-on-surface mt-2">—</div>
-<div class="flex items-center gap-1 text-secondary mt-1">
-<span class="material-symbols-outlined text-[14px]" data-icon="fiber_manual_record" style="font-variation-settings: 'FILL' 1;">fiber_manual_record</span>
-<span class="font-body-sm text-body-sm">Pending review</span>
-</div>
-</div>
-</div>
-<!-- Filters Section -->
-<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 mb-6 flex flex-wrap items-center gap-4">
-<div class="relative flex-1 min-w-[200px]">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant w-4 h-4 text-[18px]" data-icon="search" style="font-variation-settings: 'FILL' 0;">search</span>
-<input class="w-full bg-surface-container border border-outline-variant rounded-DEFAULT py-1.5 pl-9 pr-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/50" placeholder="Search IP..." type="text"/>
-</div>
-<select class="bg-surface-container border border-outline-variant rounded-DEFAULT py-1.5 px-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/50 text-on-surface">
-<option value="">Prediction</option>
-<option value="attacker">Attacker</option>
-<option value="benign">Benign</option>
-</select>
-<select class="bg-surface-container border border-outline-variant rounded-DEFAULT py-1.5 px-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/50 text-on-surface">
-<option value="">Agent Action</option>
-<option value="block">Block</option>
-<option value="allow">Allow</option>
-<option value="challenge">Challenge</option>
-</select>
-<select class="bg-surface-container border border-outline-variant rounded-DEFAULT py-1.5 px-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/50 text-on-surface">
-<option value="">Read/Unread</option>
-<option value="unread">Unread</option>
-<option value="read">Read</option>
-</select>
-<div class="relative">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant w-4 h-4 text-[18px]" data-icon="calendar_today" style="font-variation-settings: 'FILL' 0;">calendar_today</span>
-<input class="bg-surface-container border border-outline-variant rounded-DEFAULT py-1.5 pl-9 pr-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/50 text-on-surface" type="date"/>
-</div>
-<button class="bg-surface-container-highest hover:bg-surface-variant text-on-surface border border-outline-variant rounded-DEFAULT py-1.5 px-4 text-sm font-medium transition-colors">
-        Clear Filters
-    </button>
-</div>
-<!-- Main Table -->
-<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden">
-<div class="overflow-x-auto">
-<table class="w-full text-left text-sm whitespace-nowrap">
-<thead class="bg-surface-container-low border-b border-outline-variant text-on-surface-variant font-label-caps text-label-caps">
-<tr>
-<th class="px-4 py-3 font-medium">Alert ID</th>
-<th class="px-4 py-3 font-medium">IP Address</th>
-<th class="px-4 py-3 font-medium">Prediction</th>
-<th class="px-4 py-3 font-medium">Confidence (%)</th>
-<th class="px-4 py-3 font-medium">Agent Action</th>
-<th class="px-4 py-3 font-medium">Reason</th>
-<th class="px-4 py-3 font-medium">Timestamp</th>
-<th class="px-4 py-3 font-medium">Status</th>
-</tr>
-</thead>
-<tbody id="alerts-table-body" class="divide-y divide-outline-variant/50 text-on-surface">
-<tr><td colspan="8" class="px-4 py-8 text-center text-on-surface-variant">Loading alerts…</td></tr>
-</tbody>
-</table>
-</div>
-<div class="px-4 py-3 border-t border-outline-variant bg-surface-container-lowest flex items-center justify-between text-sm text-on-surface-variant">
-<span>Showing 1 to 4 of 1,248 entries</span>
-<div class="flex gap-2">
-<button class="px-3 py-1 border border-outline-variant rounded text-on-surface-variant hover:bg-surface-container disabled:opacity-50" disabled="">Previous</button>
-<button class="px-3 py-1 border border-outline-variant rounded text-on-surface hover:bg-surface-container">Next</button>
-</div>
-</div>
-</div>
-</main>
-<script src="../js/config.js"></script>
-<script src="../js/api.js"></script>
-<script src="../js/format.js"></script>
-<script src="../js/nav.js"></script>
-<script src="../js/pages.js"></script>
-<script src="../js/init.js"></script>
-</body></html>
+<body class="bg-slate-50 text-slate-900 antialiased flex min-h-screen" data-page="alerts">
+
+  <!-- Sidebar Navigation -->
+  <aside id="sentinel-sidebar" class="w-[260px] h-screen fixed left-0 top-0 flex flex-col bg-slate-900 text-slate-300 z-40 border-r border-slate-800">
+    <div class="h-16 flex items-center px-5 border-b border-slate-800/80">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-sm">
+          <span class="material-symbols-outlined text-[22px]">shield</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-bold text-white text-base tracking-tight leading-tight">Chakravyuh</span>
+          <span class="text-[11px] font-semibold tracking-wider text-sky-400 uppercase">Sentinel SOC</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" data-nav="dashboard" href="#">
+        <span class="material-symbols-outlined text-[20px]">dashboard</span>
+        Dashboard
+      </a>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" data-nav="alerts" href="#">
+        <span class="material-symbols-outlined text-[20px]">warning</span>
+        Security Alerts
+      </a>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" data-nav="blocked-ips" href="#">
+        <span class="material-symbols-outlined text-[20px]">block</span>
+        Blocked IPs
+      </a>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" data-nav="requests" href="#">
+        <span class="material-symbols-outlined text-[20px]">swap_horiz</span>
+        Requests
+      </a>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" data-nav="sessions" href="#">
+        <span class="material-symbols-outlined text-[20px]">history</span>
+        Sessions
+      </a>
+      <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" data-nav="analytics" href="#">
+        <span class="material-symbols-outlined text-[20px]">analytics</span>
+        Security Analytics
+      </a>
+    </nav>
+
+    <!-- Pipeline Architecture Status -->
+    <div class="p-4 border-t border-slate-800/80 bg-slate-950/40">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Detection Engine</span>
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      </div>
+      <div class="space-y-1 text-xs text-slate-400">
+        <div class="flex items-center justify-between py-0.5">
+          <span>URL Classifier</span>
+          <span class="text-[10px] text-emerald-400">Live</span>
+        </div>
+        <div class="flex items-center justify-between py-0.5">
+          <span>Behavior Model</span>
+          <span class="text-[10px] text-emerald-400">28-Dim</span>
+        </div>
+        <div class="flex items-center justify-between py-0.5">
+          <span>Risk Engine</span>
+          <span class="text-[10px] text-emerald-400">Active</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="flex-1 md:ml-[260px] flex flex-col min-h-screen">
+    <!-- Top Header Bar -->
+    <header class="h-16 fixed top-0 right-0 z-30 w-full md:w-[calc(100%-260px)] bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <h2 class="text-sm font-bold text-slate-800">Security Alerts Feed</h2>
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Real-Time Ingestion</span>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button id="refresh-alerts-btn" class="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-colors shadow-xs">
+          <span class="material-symbols-outlined text-[16px]">refresh</span>
+          <span>Refresh Feed</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Canvas -->
+    <main class="flex-1 mt-16 p-6 overflow-y-auto">
+      <!-- Title & Subtitle -->
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Security Alerts</h1>
+        <p class="text-sm text-slate-500 mt-1">Monitor suspicious behavior detected by Chakravyuh Sentinel.</p>
+      </div>
+
+      <!-- Summary KPI Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Alerts</div>
+          <div class="text-2xl font-bold font-mono text-slate-900 mt-1" id="alert-stat-total">—</div>
+          <div class="text-xs text-slate-400 mt-1">Recorded incidents</div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs border-l-4 border-l-red-600">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-red-600">Critical Alerts</div>
+          <div class="text-2xl font-bold font-mono text-red-600 mt-1" id="alert-stat-critical">—</div>
+          <div class="text-xs text-red-500 mt-1">High urgency threats</div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs border-l-4 border-l-orange-500">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-orange-600">High Risk Alerts</div>
+          <div class="text-2xl font-bold font-mono text-orange-600 mt-1" id="alert-stat-high">—</div>
+          <div class="text-xs text-orange-500 mt-1">Elevated risk scores</div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Active Blocks</div>
+          <div class="text-2xl font-bold font-mono text-slate-900 mt-1" id="alert-stat-blocks">—</div>
+          <div class="text-xs text-slate-400 mt-1">Mitigated by agent</div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs col-span-2 md:col-span-1">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-amber-600">Unread Alerts</div>
+          <div class="text-2xl font-bold font-mono text-amber-600 mt-1" id="alert-stat-unread">—</div>
+          <div class="text-xs text-amber-600 mt-1">Awaiting review</div>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="bg-white border border-slate-200 rounded-xl p-4 mb-6 shadow-xs flex flex-wrap items-center gap-3">
+        <!-- Search IP / Session -->
+        <div class="relative flex-1 min-w-[200px]">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+          <input id="filter-ip" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-1.5 pl-9 pr-3 text-xs md:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600" placeholder="Filter by IP address or session ID..." type="text"/>
+        </div>
+
+        <!-- Prediction Filter -->
+        <select id="filter-prediction" class="bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-3 text-xs md:text-sm text-slate-700 focus:outline-none focus:bg-white focus:border-blue-600">
+          <option value="">All Predictions</option>
+          <option value="attacker">Attacker</option>
+          <option value="normal">Normal</option>
+        </select>
+
+        <!-- Severity Filter -->
+        <select id="filter-severity" class="bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-3 text-xs md:text-sm text-slate-700 focus:outline-none focus:bg-white focus:border-blue-600">
+          <option value="">All Severities</option>
+          <option value="CRITICAL">Critical</option>
+          <option value="HIGH">High</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="LOW">Low</option>
+        </select>
+
+        <!-- Action Filter -->
+        <select id="filter-action" class="bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-3 text-xs md:text-sm text-slate-700 focus:outline-none focus:bg-white focus:border-blue-600">
+          <option value="">All Actions</option>
+          <option value="BLOCK">Block</option>
+          <option value="ALERT">Alert</option>
+          <option value="MONITOR">Monitor</option>
+          <option value="ALLOW">Allow</option>
+        </select>
+
+        <!-- Read/Unread Filter -->
+        <select id="filter-read" class="bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-3 text-xs md:text-sm text-slate-700 focus:outline-none focus:bg-white focus:border-blue-600">
+          <option value="">All Statuses</option>
+          <option value="unread">Unread Only</option>
+          <option value="read">Read Only</option>
+        </select>
+
+        <!-- Clear Button -->
+        <button id="clear-filters-btn" class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-xs md:text-sm font-medium text-slate-600 transition-colors">
+          Clear Filters
+        </button>
+      </div>
+
+      <!-- Main Alerts Table -->
+      <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+        <div class="px-5 py-3 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
+          <span id="alerts-count-label" class="text-xs font-medium text-slate-500">Loading alerts…</span>
+          <span class="text-[11px] text-slate-400">Click any row for detail drawer</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs md:text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[11px] font-semibold">
+              <tr>
+                <th class="px-4 py-3">Alert ID</th>
+                <th class="px-4 py-3">IP Address</th>
+                <th class="px-4 py-3">Session</th>
+                <th class="px-4 py-3">Prediction</th>
+                <th class="px-4 py-3">Confidence</th>
+                <th class="px-4 py-3">Risk Score</th>
+                <th class="px-4 py-3">Severity</th>
+                <th class="px-4 py-3">Action</th>
+                <th class="px-4 py-3">Reason</th>
+                <th class="px-4 py-3">Timestamp</th>
+                <th class="px-4 py-3">Status</th>
+              </tr>
+            </thead>
+            <tbody id="alerts-table-body" class="divide-y divide-slate-100 text-slate-700">
+              <tr><td colspan="11" class="px-6 py-8 text-center text-slate-400">Loading alerts from Chakravyuh API…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Reusable Slide-over Alert Detail Drawer -->
+  <div id="alert-detail-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 transition-opacity duration-300 hidden opacity-0 flex justify-end">
+    <div id="alert-detail-drawer" class="w-full max-w-lg bg-white h-full shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300">
+      <!-- Drawer Header -->
+      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-red-100 text-red-700 flex items-center justify-center font-bold">
+            <span class="material-symbols-outlined text-[18px]">security</span>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 text-base" id="drawer-alert-id">Alert Details</h3>
+            <span class="text-xs text-slate-500" id="drawer-alert-time">—</span>
+          </div>
+        </div>
+        <button id="close-alert-drawer" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <!-- Drawer Content -->
+      <div class="p-6 overflow-y-auto flex-1 space-y-6">
+        <!-- Classification & Risk Meter -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Classification</span>
+            <div id="drawer-alert-severity">—</div>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Calculated Risk Score</span>
+            <div id="drawer-alert-risk">—</div>
+          </div>
+          <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+            <div id="drawer-risk-meter" class="h-full bg-red-600 rounded-full transition-all duration-300" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Threat & Action Summary -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="p-3.5 bg-white border border-slate-200 rounded-lg">
+            <div class="text-[11px] font-semibold text-slate-500 uppercase">Agent Prediction</div>
+            <div class="mt-1" id="drawer-alert-prediction">—</div>
+          </div>
+          <div class="p-3.5 bg-white border border-slate-200 rounded-lg">
+            <div class="text-[11px] font-semibold text-slate-500 uppercase">Model Confidence</div>
+            <div class="mt-1 font-mono font-bold text-slate-900 text-sm" id="drawer-alert-confidence">—</div>
+          </div>
+          <div class="p-3.5 bg-white border border-slate-200 rounded-lg">
+            <div class="text-[11px] font-semibold text-slate-500 uppercase">Enforced Action</div>
+            <div class="mt-1" id="drawer-alert-action">—</div>
+          </div>
+          <div class="p-3.5 bg-white border border-slate-200 rounded-lg">
+            <div class="text-[11px] font-semibold text-slate-500 uppercase">Client IP Address</div>
+            <div class="mt-1 font-mono font-bold text-slate-900 text-sm" id="drawer-alert-ip">—</div>
+          </div>
+        </div>
+
+        <!-- Target Session -->
+        <div class="p-4 bg-white border border-slate-200 rounded-lg">
+          <div class="text-[11px] font-semibold text-slate-500 uppercase mb-1">Target Session Identifier</div>
+          <div class="font-mono text-xs text-slate-800 select-all" id="drawer-alert-session">—</div>
+        </div>
+
+        <!-- Detection Reason -->
+        <div class="p-4 bg-white border border-slate-200 rounded-lg">
+          <div class="text-[11px] font-semibold text-slate-500 uppercase mb-1">Detection Logic / Reason</div>
+          <p class="text-xs text-slate-700 leading-relaxed" id="drawer-alert-reason">—</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/format.js"></script>
+  <script src="../js/nav.js"></script>
+  <script src="../js/pages.js"></script>
+  <script src="../js/init.js"></script>
+</body>
+</html>

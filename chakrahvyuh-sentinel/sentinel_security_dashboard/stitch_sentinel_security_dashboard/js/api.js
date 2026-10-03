@@ -1,9 +1,9 @@
 window.SentinelAPI = {
   base() {
-    return window.SENTINEL_CONFIG.API_BASE.replace(/\/$/, "");
+    return (window.SENTINEL_CONFIG?.API_BASE || "https://chakravyuh-sentinel.onrender.com").replace(/\/$/, "");
   },
 
-  async get(path, params = {}) {
+  async get(path, params = {}, timeoutMs = 15000) {
     const url = new URL(this.base() + path);
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== "") {
@@ -11,11 +11,32 @@ window.SentinelAPI = {
       }
     });
 
-    const response = await fetch(url.toString());
-    if (!response.ok) {
-      throw new Error(`API ${path} failed: ${response.status}`);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(url.toString(), {
+        signal: controller.signal,
+        headers: { Accept: "application/json" },
+      });
+      clearTimeout(timer);
+      if (!response.ok) {
+        throw new Error(`API ${path} error: HTTP ${response.status}`);
+      }
+      return await response.json();
+    } catch (err) {
+      clearTimeout(timer);
+      throw err;
     }
-    return response.json();
+  },
+
+  async checkHealth() {
+    try {
+      const res = await this.get("/", {}, 6000);
+      return { online: true, data: res };
+    } catch {
+      return { online: false };
+    }
   },
 
   getStats() {
@@ -26,19 +47,19 @@ window.SentinelAPI = {
     return this.get("/statistics");
   },
 
-  getAlerts(params) {
+  getAlerts(params = {}) {
     return this.get("/alerts", params);
   },
 
-  getBlockedIps(params) {
+  getBlockedIps(params = {}) {
     return this.get("/blocked-ips", params);
   },
 
-  getRequests(params) {
+  getRequests(params = {}) {
     return this.get("/requests", params);
   },
 
-  getSessions(params) {
+  getSessions(params = {}) {
     return this.get("/sessions", params);
   },
 
@@ -54,10 +75,15 @@ window.SentinelAPI = {
     return this.get(`/incidents/${encodeURIComponent(incidentId)}/explanation`);
   },
 
-  closeIncident(incidentId) {
-    return fetch(`${this.base()}/incidents/${encodeURIComponent(incidentId)}/close`, {
+  async closeIncident(incidentId) {
+    const response = await fetch(`${this.base()}/incidents/${encodeURIComponent(incidentId)}/close`, {
       method: "PATCH",
-    }).then((r) => r.json());
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to close incident: HTTP ${response.status}`);
+    }
+    return response.json();
   },
 
   getSeverityStats() {
@@ -66,5 +92,9 @@ window.SentinelAPI = {
 
   getActionStats() {
     return this.get("/stats/actions");
+  },
+
+  getRateLimitStats() {
+    return this.get("/rate-limit/stats");
   },
 };

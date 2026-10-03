@@ -16,8 +16,19 @@ window.SentinelNav = {
         link.setAttribute("href", this.pages[target]);
       }
       if (target === current) {
-        link.classList.add("sentinel-nav-active");
+        link.classList.add("nav-item-active");
       }
     });
+
+    // Mobile navigation toggle if present
+    const mobileToggle = document.getElementById("mobile-menu-toggle");
+    const sidebar = document.getElementById("sentinel-sidebar");
+    if (mobileToggle && sidebar) {
+      mobileToggle.addEventListener("click", () => {
+        sidebar.classList.toggle("hidden");
+        sidebar.classList.toggle("fixed");
+        sidebar.classList.toggle("z-50");
+      });
+    }
   },
 };
