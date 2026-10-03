@@ -16,8 +16,9 @@ from app.utils import track_ip
 # Security / behavior / incident pipeline
 from app.database import init_db, SessionLocal, get_db
 from app.security_middleware import IPBlockMiddleware
+from app.blocking_service import is_ip_blocked
 from app.request_logging_middleware import RequestLoggingMiddleware
-from app.rate_limit_middleware import RateLimitMiddleware
+from app.rate_limit_middleware import RateLimitMiddleware, _rate_limiter
 from app.dashboard_routes import router as dashboard_router
 from app.config import ALLOWED_ORIGINS, SESSION_EVAL_THRESHOLD
 from app.db_models import RequestLog, SessionRecord, SecurityAlert, BlockedIP, SecurityIncident, RateLimitEvent
@@ -194,20 +195,49 @@ def ingest_traffic(payload: TrafficIngestRequest):
         # Update session
         session = touch_session(db, session)
 
+        # Check if client IP is currently blocked
+        is_blocked = is_ip_blocked(db, payload.ip)
+        action = "BLOCK" if is_blocked else "ALLOW"
+        risk_score = None
+        severity = None
+
+        # Check rate limiter for this external IP
+        rate_info = {}
+        if not is_blocked:
+            rate_allowed, rate_info = _rate_limiter.is_allowed(payload.ip)
+            if not rate_allowed:
+                action = "RATE_LIMIT"
+
         # Unified session evaluation if threshold reached
         if session.request_count > 0 and session.request_count % SESSION_EVAL_THRESHOLD == 0:
-            evaluate_session_security(
+            eval_res = evaluate_session_security(
                 db=db,
                 session=session,
                 client_ip=payload.ip,
                 current_url=payload.endpoint,
             )
+            if eval_res and eval_res.get("evaluated"):
+                eval_action = eval_res.get("action")
+                risk_score = eval_res.get("risk_score")
+                severity = eval_res.get("severity")
+                is_blocked = is_ip_blocked(db, payload.ip)
+                if eval_action == "BLOCK" or is_blocked:
+                    action = "BLOCK"
+                elif not is_blocked and rate_info and not rate_allowed:
+                    action = "RATE_LIMIT"
+                elif eval_action:
+                    action = eval_action
 
         return {
             "success": True,
             "message": "Traffic ingested successfully",
             "session_id": session.session_id,
             "request_count": session.request_count,
+            "action": action,
+            "blocked": is_blocked,
+            "risk_score": risk_score,
+            "severity": severity,
+            "rate_limit_info": rate_info,
         }
 
     except Exception as e:
@@ -218,6 +248,24 @@ def ingest_traffic(payload: TrafficIngestRequest):
         }
     finally:
         db.close()
+
+
+@app.get("/api/check-ip/{ip}")
+def check_ip_status(ip: str, db: Session = Depends(get_db)):
+    """
+    Check if an IP is currently blocked or rate-limited by Sentinel.
+    Allows external applications like X Beauty to pre-check enforcement status.
+    """
+    blocked = is_ip_blocked(db, ip)
+    rate_allowed, rate_info = _rate_limiter.check_allowed(ip) if not blocked else (True, {})
+    action = "BLOCK" if blocked else ("RATE_LIMIT" if not rate_allowed else "ALLOW")
+    return {
+        "ip": ip,
+        "blocked": blocked,
+        "rate_limited": not rate_allowed,
+        "action": action,
+        "rate_limit_info": rate_info,
+    }
 
 
 # ============================================================

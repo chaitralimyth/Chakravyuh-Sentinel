@@ -98,6 +98,49 @@ class RateLimiter:
             "window": self.window_seconds,
             "current": request_count
         }
+
+    def check_allowed(self, ip: str) -> Tuple[bool, Dict[str, int]]:
+        """
+        Non-mutating rate limit check: inspects if request from IP is currently allowed
+        WITHOUT recording a request timestamp or modifying sliding-window history.
+        Used for pre-routing checks to prevent double-counting.
+        """
+        current_time = time.time()
+        self._cleanup_old_requests(ip, current_time)
+        request_count = len(self.request_history[ip])
+
+        time_in_window = 0
+        if request_count > 0:
+            oldest_request = self.request_history[ip][0]
+            time_in_window = current_time - oldest_request
+
+        if request_count < self.max_requests:
+            return True, {
+                "limit": self.max_requests,
+                "remaining": self.max_requests - request_count,
+                "reset": int(oldest_request + self.window_seconds) if request_count > 0 else int(current_time + self.window_seconds),
+                "window": self.window_seconds,
+                "current": request_count,
+            }
+
+        if request_count < self.max_requests + self.burst:
+            if time_in_window < self.window_seconds * 0.5:
+                return True, {
+                    "limit": self.max_requests + self.burst,
+                    "remaining": self.max_requests + self.burst - request_count,
+                    "reset": int(oldest_request + self.window_seconds),
+                    "window": self.window_seconds,
+                    "current": request_count,
+                    "burst_used": True,
+                }
+
+        return False, {
+            "limit": self.max_requests,
+            "remaining": 0,
+            "reset": int(oldest_request + self.window_seconds),
+            "window": self.window_seconds,
+            "current": request_count,
+        }
     
     def _cleanup_old_requests(self, ip: str, current_time: float):
         """Remove requests older than the time window."""
