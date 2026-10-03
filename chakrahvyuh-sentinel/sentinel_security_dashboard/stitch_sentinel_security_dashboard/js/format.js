@@ -138,7 +138,6 @@ window.SentinelFormat = {
 
   riskScoreBadge(score, severity) {
     if (score === null || score === undefined) {
-      if (severity) return this.severityBadge(severity);
       return `<span class="text-slate-400 font-mono text-xs">—</span>`;
     }
     const val = Number(score);

@@ -100,8 +100,8 @@ SentinelPages.openAlertDrawer = function (alert) {
   const overlay = document.getElementById("alert-detail-overlay");
   if (!drawer || !overlay) return;
 
-  const riskScore = alert.risk_score != null ? Math.round(alert.risk_score) : null;
-  const severity = (alert.severity || (riskScore != null ? (riskScore >= 80 ? "CRITICAL" : riskScore >= 60 ? "HIGH" : riskScore >= 30 ? "MEDIUM" : "LOW") : "INFO")).toUpperCase();
+  const riskScore = alert.risk_score !== null && alert.risk_score !== undefined ? Math.round(alert.risk_score) : null;
+  const severity = alert.severity ? alert.severity.toUpperCase() : null;
 
   setText("drawer-alert-id", `ALT-${alert.id}`);
   setText("drawer-alert-ip", alert.ip);
@@ -116,8 +116,12 @@ SentinelPages.openAlertDrawer = function (alert) {
 
   // Risk meter progress
   const meterEl = document.getElementById("drawer-risk-meter");
-  if (meterEl && riskScore != null) {
-    meterEl.style.width = `${Math.min(100, Math.max(0, riskScore))}%`;
+  if (meterEl) {
+    if (riskScore !== null) {
+      meterEl.style.width = `${Math.min(100, Math.max(0, riskScore))}%`;
+    } else {
+      meterEl.style.width = "0%";
+    }
   }
 
   // Show drawer
@@ -174,35 +178,34 @@ SentinelPages.dashboard = async function () {
       setText("stat-unread-alerts", `${F.number(stats.unread_alerts)} unread`);
       setText("stat-blocked-ips", F.number(stats.active_blocked_ips));
 
-      // 2. Prominent Risk Score & Severity Calculation
+      // 2. Risk Score & Severity Display (Backend is single source of truth)
       let latestRiskScore = null;
-      let latestSeverity = "LOW";
+      let latestSeverity = null;
 
-      // If alerts exist, derive from latest alert or severity breakdown
       if (alerts && alerts.length > 0) {
         const topAlert = alerts[0];
-        if (topAlert.risk_score != null) {
+        if (topAlert.risk_score !== null && topAlert.risk_score !== undefined) {
           latestRiskScore = Math.round(topAlert.risk_score);
-        } else if (topAlert.confidence != null) {
-          latestRiskScore = Math.round(topAlert.confidence * 100);
         }
-        latestSeverity = (topAlert.severity || (latestRiskScore >= 80 ? "CRITICAL" : latestRiskScore >= 60 ? "HIGH" : latestRiskScore >= 30 ? "MEDIUM" : "LOW")).toUpperCase();
-      } else if (severityStats) {
-        if (severityStats.CRITICAL > 0) latestSeverity = "CRITICAL";
-        else if (severityStats.HIGH > 0) latestSeverity = "HIGH";
-        else if (severityStats.MEDIUM > 0) latestSeverity = "MEDIUM";
+        if (topAlert.severity) {
+          latestSeverity = topAlert.severity.toUpperCase();
+        }
       }
 
-      const scoreDisplay = latestRiskScore != null ? latestRiskScore : (latestSeverity === "CRITICAL" ? 85 : latestSeverity === "HIGH" ? 68 : latestSeverity === "MEDIUM" ? 42 : 12);
-      setText("stat-risk-score", `${scoreDisplay}`);
+      setText("stat-risk-score", latestRiskScore !== null ? `${latestRiskScore}` : "—");
       setHTML("stat-severity-badge", F.severityBadge(latestSeverity));
       const riskMeterEl = document.getElementById("stat-risk-meter");
       if (riskMeterEl) {
-        riskMeterEl.style.width = `${Math.min(100, Math.max(0, scoreDisplay))}%`;
-        if (scoreDisplay >= 80) riskMeterEl.className = "h-full rounded-full transition-all duration-500 bg-red-600";
-        else if (scoreDisplay >= 60) riskMeterEl.className = "h-full rounded-full transition-all duration-500 bg-orange-500";
-        else if (scoreDisplay >= 30) riskMeterEl.className = "h-full rounded-full transition-all duration-500 bg-amber-500";
-        else riskMeterEl.className = "h-full rounded-full transition-all duration-500 bg-emerald-500";
+        if (latestRiskScore !== null) {
+          riskMeterEl.style.width = `${Math.min(100, Math.max(0, latestRiskScore))}%`;
+          if (latestRiskScore >= 80) riskMeterEl.className = "h-full rounded-full transition-all duration-500 bg-red-600";
+          else if (latestRiskScore >= 60) riskMeterEl.className = "h-full rounded-full transition-all duration-500 bg-orange-500";
+          else if (latestRiskScore >= 30) riskMeterEl.className = "h-full rounded-full transition-all duration-500 bg-amber-500";
+          else riskMeterEl.className = "h-full rounded-full transition-all duration-500 bg-emerald-500";
+        } else {
+          riskMeterEl.style.width = "0%";
+          riskMeterEl.className = "h-full rounded-full transition-all duration-500 bg-slate-200";
+        }
       }
 
       // 3. Render Recent Security Alerts Table
@@ -210,8 +213,8 @@ SentinelPages.dashboard = async function () {
         if (alerts.length > 0) {
           tbody.innerHTML = alerts
             .map((alert, idx) => {
-              const rScore = alert.risk_score != null ? Math.round(alert.risk_score) : (alert.confidence != null ? Math.round(alert.confidence * 100) : null);
-              const sev = (alert.severity || (rScore != null ? (rScore >= 80 ? "CRITICAL" : rScore >= 60 ? "HIGH" : rScore >= 30 ? "MEDIUM" : "LOW") : "INFO")).toUpperCase();
+              const rScore = alert.risk_score !== null && alert.risk_score !== undefined ? Math.round(alert.risk_score) : null;
+              const sev = alert.severity ? alert.severity.toUpperCase() : null;
               return `
               <tr class="hover:bg-slate-50/80 transition-colors cursor-pointer group" data-alert-index="${idx}">
                 <td class="px-5 py-3.5 whitespace-nowrap">${F.severityBadge(sev)}</td>
@@ -416,8 +419,8 @@ SentinelPages.alerts = async function () {
         return false;
       }
       if (predQuery && (a.prediction || "").toLowerCase() !== predQuery) return false;
-      const rScore = a.risk_score != null ? Math.round(a.risk_score) : (a.confidence != null ? Math.round(a.confidence * 100) : null);
-      const sev = (a.severity || (rScore != null ? (rScore >= 80 ? "CRITICAL" : rScore >= 60 ? "HIGH" : rScore >= 30 ? "MEDIUM" : "LOW") : "INFO")).toUpperCase();
+      const rScore = a.risk_score !== null && a.risk_score !== undefined ? Math.round(a.risk_score) : null;
+      const sev = a.severity ? a.severity.toUpperCase() : null;
       if (sevQuery && sev !== sevQuery) return false;
       if (actQuery && (a.action || "").toUpperCase() !== actQuery) return false;
       if (readQuery === "read" && !a.is_read) return false;
@@ -437,8 +440,8 @@ SentinelPages.alerts = async function () {
 
     tbody.innerHTML = filtered
       .map((a, idx) => {
-        const rScore = a.risk_score != null ? Math.round(a.risk_score) : (a.confidence != null ? Math.round(a.confidence * 100) : null);
-        const sev = (a.severity || (rScore != null ? (rScore >= 80 ? "CRITICAL" : rScore >= 60 ? "HIGH" : rScore >= 30 ? "MEDIUM" : "LOW") : "INFO")).toUpperCase();
+        const rScore = a.risk_score !== null && a.risk_score !== undefined ? Math.round(a.risk_score) : null;
+        const sev = a.severity ? a.severity.toUpperCase() : null;
         return `
         <tr class="hover:bg-slate-50 transition-colors cursor-pointer group" data-alert-row="${idx}">
           <td class="px-4 py-3.5 font-mono text-xs font-semibold text-slate-800">ALT-${a.id}</td>
@@ -484,8 +487,8 @@ SentinelPages.alerts = async function () {
       // Summary counts
       setText("alert-stat-total", F.number(stats.total_alerts || alerts.length));
       setText("alert-stat-unread", F.number(stats.unread_alerts || alerts.filter((a) => !a.is_read).length));
-      const criticalCount = severityStats?.CRITICAL ?? alerts.filter((a) => (a.severity || "").toUpperCase() === "CRITICAL" || (a.risk_score && a.risk_score >= 80)).length;
-      const highCount = severityStats?.HIGH ?? alerts.filter((a) => (a.severity || "").toUpperCase() === "HIGH" || (a.risk_score && a.risk_score >= 60 && a.risk_score < 80)).length;
+      const criticalCount = severityStats?.CRITICAL ?? alerts.filter((a) => (a.severity || "").toUpperCase() === "CRITICAL").length;
+      const highCount = severityStats?.HIGH ?? alerts.filter((a) => (a.severity || "").toUpperCase() === "HIGH").length;
       setText("alert-stat-critical", F.number(criticalCount));
       setText("alert-stat-high", F.number(highCount));
       setText("alert-stat-blocks", F.number(alerts.filter((a) => (a.action || "").toUpperCase() === "BLOCK").length));
@@ -568,7 +571,6 @@ SentinelPages["blocked-ips"] = async function () {
 
     tbody.innerHTML = filtered
       .map((b) => {
-        const confPct = b.confidence != null ? Math.round(b.confidence * 100) : null;
         return `
         <tr class="hover:bg-slate-50 transition-colors">
           <td class="px-5 py-3.5 font-mono text-xs font-bold text-slate-900">${b.ip}</td>

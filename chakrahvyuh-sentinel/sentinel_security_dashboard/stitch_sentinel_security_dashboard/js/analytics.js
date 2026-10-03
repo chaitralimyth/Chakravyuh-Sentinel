@@ -255,8 +255,8 @@ SentinelPages.analytics = async function () {
       if (tbody) {
         const rows = alerts.map((a) => {
           const session = sessions.find((s) => s.session_id === a.session_id);
-          const rScore = a.risk_score != null ? Math.round(a.risk_score) : (a.confidence != null ? Math.round(a.confidence * 100) : null);
-          const sev = (a.severity || (rScore != null ? (rScore >= 80 ? "CRITICAL" : rScore >= 60 ? "HIGH" : rScore >= 30 ? "MEDIUM" : "LOW") : "INFO")).toUpperCase();
+          const rScore = a.risk_score !== null && a.risk_score !== undefined ? Math.round(a.risk_score) : null;
+          const sev = a.severity ? a.severity.toUpperCase() : null;
 
           return `
           <tr class="hover:bg-slate-50 transition-colors">
