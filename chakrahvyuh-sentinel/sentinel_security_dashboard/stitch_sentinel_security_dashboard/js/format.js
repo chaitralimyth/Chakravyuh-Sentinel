@@ -238,3 +238,13 @@ window.SentinelFormat = {
     return id.length > 8 ? id.slice(0, 8) : id;
   },
 };
+
+window.setText = window.setText || function (id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value ?? "—";
+};
+
+window.setHTML = window.setHTML || function (id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+};

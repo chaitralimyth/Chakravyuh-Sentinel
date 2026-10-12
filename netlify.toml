@@ -1,0 +1,20 @@
+# Netlify Configuration for Chakravyuh Sentinel Security SOC Dashboard
+
+[build]
+  base = "chakrahvyuh-sentinel/sentinel_security_dashboard/stitch_sentinel_security_dashboard"
+  publish = "."
+
+# Production redirect for clean root entry point
+[[redirects]]
+  from = "/"
+  to = "/dashboard_overview_project_aligned/code.html"
+  status = 302
+  force = false
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
