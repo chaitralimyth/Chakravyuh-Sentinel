@@ -1,10 +1,16 @@
 window.SentinelAPI = {
   base() {
-    return (window.SENTINEL_CONFIG?.API_BASE || "https://chakravyuh-sentinel.onrender.com").replace(/\/$/, "");
+    const raw = window.SENTINEL_CONFIG?.API_BASE || "https://chakravyuh-sentinel-web.onrender.com";
+    return String(raw).trim().replace(/\/+$/, "");
+  },
+
+  buildUrl(path) {
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    return `${this.base()}${cleanPath}`;
   },
 
   async get(path, params = {}, timeoutMs = 15000) {
-    const url = new URL(this.base() + path);
+    const url = new URL(this.buildUrl(path));
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== "") {
         url.searchParams.set(key, String(value));
@@ -76,7 +82,7 @@ window.SentinelAPI = {
   },
 
   async closeIncident(incidentId) {
-    const response = await fetch(`${this.base()}/incidents/${encodeURIComponent(incidentId)}/close`, {
+    const response = await fetch(this.buildUrl(`/incidents/${encodeURIComponent(incidentId)}/close`), {
       method: "PATCH",
       headers: { Accept: "application/json" },
     });
