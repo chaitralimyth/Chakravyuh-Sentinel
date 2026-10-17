@@ -1,0 +1,54 @@
+{
+  "evaluation_target": "Behavioral Session Random Forest (200 trees) + Dynamic Policy Engine",
+  "evaluation_type": "Standardized Controlled Behavioral Benchmark (Post-Hardening)",
+  "dataset_provenance": "10 Synthesized Test Scenarios across 6 Threat Categories",
+  "dataset_limitation": "Controlled test vectors; NOT a wild internet traffic corpus",
+  "sample_count": 10,
+  "class_distribution": {
+    "attacker": 7,
+    "normal": 3
+  },
+  "positive_class": "attacker (Index 0 in model predict_proba)",
+  "negative_class": "normal (Index 1 in model predict_proba)",
+  "isolated_model_metrics": {
+    "decision_threshold": 0.5,
+    "true_positives": 7,
+    "true_negatives": 2,
+    "false_positives": 1,
+    "false_negatives": 0,
+    "accuracy": 0.9,
+    "precision": 0.875,
+    "recall": 1.0,
+    "f1_score": 0.9333,
+    "false_positive_rate": 0.3333
+  },
+  "adaptive_policy_enforcement_metrics": {
+    "action_thresholds": {
+      "ALLOW": [
+        0,
+        29
+      ],
+      "MONITOR": [
+        30,
+        59
+      ],
+      "RATE_LIMIT": [
+        60,
+        79
+      ],
+      "BLOCK": [
+        80,
+        100
+      ]
+    },
+    "benign_sessions_evaluated": 3,
+    "benign_sessions_allowed": 3,
+    "benign_false_interventions": 0,
+    "enforcement_false_positive_rate": 0.0,
+    "attack_sessions_evaluated": 7,
+    "attack_sessions_intercepted": 7,
+    "attack_sessions_missed": 0,
+    "enforcement_recall": 1.0,
+    "damping_mechanism_evidence": "SC-01: isolated model anomaly P=0.58 damped to risk_score=24.2, preserving ALLOW action"
+  }
+}

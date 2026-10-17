@@ -1,0 +1,7 @@
+Evaluation Level,Actual Attacker (Pos),Actual Normal (Neg)
+Model Classification (Pred Attacker),7,1
+Model Classification (Pred Normal),0,2
+
+Policy Enforcement Level,Actual Attacker (Pos),Actual Normal (Neg)
+Policy Action != ALLOW (Intervention),7,0
+Policy Action == ALLOW (Pass-through),0,3

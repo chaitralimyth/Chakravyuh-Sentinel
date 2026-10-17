@@ -1,0 +1,11 @@
+scenario_id,scenario_type,ground_truth,predicted_label,raw_attacker_probability,raw_normal_probability,computed_risk_score,agent_action,agent_severity,primary_reason,model_match,policy_match
+SC-01,Legitimate,normal,attacker,0.58,0.42,24.2,ALLOW,LOW,Risk score 24.2 within normal limits (0-29),False,True
+SC-02,Legitimate,normal,normal,0.01,0.99,1.4,ALLOW,LOW,Risk score 1.4 within normal limits (0-29),True,True
+SC-03,Legitimate,normal,normal,0.09,0.91,4.6,ALLOW,LOW,Risk score 4.6 within normal limits (0-29),True,True
+SC-04,Reconnaissance Scan,attacker,attacker,0.695,0.305,52.33,MONITOR,MEDIUM,Risk score 52.3 reached MONITOR threshold (30-59),True,True
+SC-05,Reconnaissance Scan,attacker,attacker,0.655,0.345,47.5,MONITOR,MEDIUM,Risk score 47.5 reached MONITOR threshold (30-59),True,True
+SC-06,Credential Stuffing,attacker,attacker,0.95,0.05,57.33,MONITOR,MEDIUM,Risk score 57.3 reached MONITOR threshold (30-59),True,True
+SC-07,Credential Stuffing,attacker,attacker,0.94,0.06,53.63,MONITOR,MEDIUM,Risk score 53.6 reached MONITOR threshold (30-59),True,True
+SC-08,Admin Enumeration,attacker,attacker,0.925,0.075,58.9,MONITOR,MEDIUM,Risk score 58.9 reached MONITOR threshold (30-59),True,True
+SC-09,Injection Attack,attacker,attacker,0.68,0.32,41.37,MONITOR,MEDIUM,Risk score 41.4 reached MONITOR threshold (30-59),True,True
+SC-10,Volumetric Burst,attacker,attacker,0.89,0.11,51.6,MONITOR,MEDIUM,Risk score 51.6 reached MONITOR threshold (30-59),True,True

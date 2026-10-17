@@ -1,0 +1,132 @@
+[
+  {
+    "test_id": "ENF-T01",
+    "category": "Pre-Routing Check",
+    "description": "Pre-route check on unblocked benign IP",
+    "expected_behavior": "HTTP 200, blocked=False, action='ALLOW'",
+    "observed_behavior": "HTTP 200, blocked=False, action='ALLOW'",
+    "status": "PASS",
+    "finding": "Unblocked IP correctly recognized as ALLOW with no restriction",
+    "evidence": {
+      "ip": "192.168.10.10",
+      "blocked": false,
+      "rate_limited": false,
+      "action": "ALLOW",
+      "rate_limit_info": {
+        "limit": 100,
+        "remaining": 100,
+        "reset": 1792224330,
+        "window": 60,
+        "current": 0
+      }
+    }
+  },
+  {
+    "test_id": "ENF-T02",
+    "category": "IP Blocking Enforcement",
+    "description": "Request to protected route from blocked IP (198.51.100.99)",
+    "expected_behavior": "HTTP 403 Forbidden prior to route execution",
+    "observed_behavior": "HTTP 403, body={\"detail\":\"Forbidden: IP blocked by Sentinel\"}",
+    "status": "PASS",
+    "finding": "Pre-route IPBlockMiddleware successfully intercepts blocked IP before route handling",
+    "evidence": {
+      "status_code": 403,
+      "body": {
+        "detail": "Forbidden: IP blocked by Sentinel"
+      }
+    }
+  },
+  {
+    "test_id": "ENF-T03",
+    "category": "Path Exemption Policy",
+    "description": "Request to exempt path (/stats) from blocked IP",
+    "expected_behavior": "HTTP 200 OK (Exempt from blocking)",
+    "observed_behavior": "HTTP 200",
+    "status": "PASS",
+    "finding": "Exempt monitoring routes bypass IP blocklist correctly",
+    "evidence": {
+      "status_code": 200
+    }
+  },
+  {
+    "test_id": "ENF-T04",
+    "category": "Localhost Exemption",
+    "description": "Request from 127.0.0.1 when 127.0.0.1 is in blocked_ips table",
+    "expected_behavior": "HTTP 200 OK (Bypasses block check due to localhost safeguard)",
+    "observed_behavior": "HTTP 200",
+    "status": "PASS",
+    "finding": "Localhost is deliberately exempt from pre-route drops to facilitate local development",
+    "evidence": {
+      "status_code": 200
+    }
+  },
+  {
+    "test_id": "ENF-T05A",
+    "category": "Rate Limiter Algorithm",
+    "description": "Sliding-window rate limiter evaluation after exceeding quota",
+    "expected_behavior": "is_allowed=False, remaining=0",
+    "observed_behavior": "is_allowed=False, remaining=0",
+    "status": "PASS",
+    "finding": "Sliding-window algorithm correctly flags rate-limited client upon quota exhaustion",
+    "evidence": {
+      "limit": 3,
+      "remaining": 0,
+      "reset": 1792224330,
+      "window": 60,
+      "current": 3
+    }
+  },
+  {
+    "test_id": "ENF-T05B",
+    "category": "Middleware Ordering Verification",
+    "description": "Verification of RateLimitMiddleware downstream route execution prevention on 429",
+    "expected_behavior": "Route handler should NOT execute when client is rate-limited (HTTP 429)",
+    "observed_behavior": "HTTP Status: 429, Route Handler Executed: False",
+    "status": "PASS",
+    "finding": "VERIFIED HARDENED: RateLimitMiddleware returns HTTP 429 immediately without calling call_next(request), preventing downstream route execution",
+    "evidence": {
+      "status_code": 429,
+      "downstream_handler_executed": false
+    }
+  },
+  {
+    "test_id": "ENF-T06",
+    "category": "Enforcement Asymmetry",
+    "description": "Adaptive Agent RATE_LIMIT decision impact on in-memory RateLimiter",
+    "expected_behavior": "Agent decision is advisory/telemetry; does NOT dynamically modify in-memory token bucket",
+    "observed_behavior": "Rate limit capacity before: 100, after: 100",
+    "status": "PASS",
+    "finding": "CONFIRMED ASYMMETRY: Rate limiting is an advisory policy logged to SecurityAlert. The in-memory rate limiter enforces purely on fixed static volume (100 req/min)",
+    "evidence": {
+      "rate_before": {
+        "current": 0,
+        "limit": 100,
+        "remaining": 100,
+        "reset": 1792224330,
+        "window": 60
+      },
+      "rate_after": {
+        "current": 0,
+        "limit": 100,
+        "remaining": 100,
+        "reset": 1792224330,
+        "window": 60
+      }
+    }
+  },
+  {
+    "test_id": "ENF-T07",
+    "category": "Pipeline Correlation",
+    "description": "Telemetry ingestion triggering periodic session evaluation at N=5",
+    "expected_behavior": "Session evaluated at count=5; SecurityAlert and SecurityIncident generated",
+    "observed_behavior": "Alerts before: 0, Alerts after: 1, Incident created: True",
+    "status": "PASS",
+    "finding": "Full pipeline verified: Ingest -> RequestLog -> SessionBuilder -> 28 Features -> ML -> Risk -> Agent -> SecurityAlert -> SecurityIncident",
+    "evidence": {
+      "session_id": "1416c92a060b4d009fedfb2173a560c2",
+      "request_count": 5,
+      "incident_severity": "HIGH",
+      "incident_action": "RATE_LIMIT"
+    }
+  }
+]

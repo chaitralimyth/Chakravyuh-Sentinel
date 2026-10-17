@@ -230,22 +230,16 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Check rate limit
         is_allowed, rate_info = _rate_limiter.is_allowed(client_ip)
         
-        # Add rate limit headers to response
-        response = await call_next(request)
-        response.headers["X-RateLimit-Limit"] = str(rate_info["limit"])
-        response.headers["X-RateLimit-Remaining"] = str(rate_info["remaining"])
-        response.headers["X-RateLimit-Reset"] = str(rate_info["reset"])
-        response.headers["X-RateLimit-Window"] = str(rate_info["window"])
-        
         if not is_allowed:
             # Log rate limit violation to database
             self._log_rate_limit_violation(client_ip, request, rate_info)
             
+            retry_after = max(0, rate_info["reset"] - int(time.time()))
             return JSONResponse(
                 {
                     "detail": "Rate limit exceeded",
                     "rate_limit": rate_info,
-                    "retry_after": rate_info["reset"] - int(time.time())
+                    "retry_after": retry_after
                 },
                 status_code=429,
                 headers={
@@ -253,10 +247,17 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     "X-RateLimit-Remaining": "0",
                     "X-RateLimit-Reset": str(rate_info["reset"]),
                     "X-RateLimit-Window": str(rate_info["window"]),
-                    "Retry-After": str(rate_info["reset"] - int(time.time()))
+                    "Retry-After": str(retry_after)
                 }
             )
         
+        # Allowed: call downstream handler and attach rate limit headers
+        response = await call_next(request)
+        response.headers["X-RateLimit-Limit"] = str(rate_info["limit"])
+        response.headers["X-RateLimit-Remaining"] = str(rate_info["remaining"])
+        response.headers["X-RateLimit-Reset"] = str(rate_info["reset"])
+        response.headers["X-RateLimit-Window"] = str(rate_info["window"])
+
         return response
 
 

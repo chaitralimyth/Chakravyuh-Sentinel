@@ -1,0 +1,105 @@
+{
+  "url_logistic_regression": {
+    "iterations": 1000,
+    "mean_us": 142.38,
+    "median_p50_us": 117.15,
+    "p95_us": 304.94,
+    "p99_us": 461.4,
+    "min_us": 89.0,
+    "max_us": 612.7,
+    "throughput_per_sec": 7023.3
+  },
+  "url_xgboost": {
+    "iterations": 1000,
+    "mean_us": 455.55,
+    "median_p50_us": 449.85,
+    "p95_us": 602.03,
+    "p99_us": 843.23,
+    "min_us": 316.0,
+    "max_us": 1555.6,
+    "throughput_per_sec": 2195.2
+  },
+  "url_random_forest": {
+    "iterations": 1000,
+    "mean_us": 7373.45,
+    "median_p50_us": 6281.7,
+    "p95_us": 13335.88,
+    "p99_us": 22723.97,
+    "min_us": 3822.9,
+    "max_us": 32582.1,
+    "throughput_per_sec": 135.6
+  },
+  "behavior_random_forest": {
+    "iterations": 1000,
+    "mean_us": 12368.76,
+    "median_p50_us": 11966.7,
+    "p95_us": 15288.19,
+    "p99_us": 18400.96,
+    "min_us": 10454.2,
+    "max_us": 21200.0,
+    "throughput_per_sec": 80.8
+  },
+  "url_feature_extraction": {
+    "iterations": 500,
+    "mean_us": 31.1,
+    "median_p50_us": 29.15,
+    "p95_us": 39.01,
+    "p99_us": 58.1,
+    "min_us": 25.8,
+    "max_us": 197.7,
+    "throughput_per_sec": 32150.6
+  },
+  "behavior_feature_extraction": {
+    "iterations": 500,
+    "mean_us": 33.66,
+    "median_p50_us": 31.55,
+    "p95_us": 38.45,
+    "p99_us": 72.33,
+    "min_us": 30.3,
+    "max_us": 241.7,
+    "throughput_per_sec": 29710.6
+  },
+  "dynamic_risk_engine": {
+    "iterations": 500,
+    "mean_us": 5.08,
+    "median_p50_us": 5.0,
+    "p95_us": 5.4,
+    "p99_us": 9.2,
+    "min_us": 4.7,
+    "max_us": 10.1,
+    "throughput_per_sec": 196974.5
+  },
+  "adaptive_security_agent": {
+    "iterations": 500,
+    "mean_us": 6.12,
+    "median_p50_us": 5.8,
+    "p95_us": 10.0,
+    "p99_us": 10.4,
+    "min_us": 5.5,
+    "max_us": 12.6,
+    "throughput_per_sec": 163377.3
+  },
+  "in_memory_pipeline_total": {
+    "iterations": 500,
+    "mean_us": 25103.65,
+    "median_p50_us": 24366.45,
+    "p95_us": 27640.97,
+    "p99_us": 31657.0,
+    "min_us": 22785.0,
+    "max_us": 119939.4,
+    "throughput_per_sec": 39.8
+  },
+  "full_stack_asgi_http": {
+    "iterations": 200,
+    "mean_us": 21057.52,
+    "median_p50_us": 11229.9,
+    "p95_us": 107783.87,
+    "p99_us": 122628.76,
+    "throughput_per_sec": 47.5,
+    "http_200_allowed_count": 120,
+    "http_429_throttled_count": 80,
+    "unexpected_errors": 0,
+    "rate_limit_throttle_rate": 0.4,
+    "unexpected_failure_rate": 0.0
+  }
+}
