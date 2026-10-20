@@ -1,10 +1,12 @@
 # Chakravyuh Sentinel Traffic Ingestion Integration Guide
 
 ## Overview
-This guide provides the integration details for connecting `https://singhaman.me` with the deployed Chakravyuh Sentinel backend to enable traffic monitoring and security analysis.
+This guide provides the integration details for connecting X-Beauty with the deployed Chakravyuh Sentinel backend to enable traffic monitoring and security analysis.
 
 ## Production Endpoint
-**URL:** `https://chakravyuh-sentinel.onrender.com/api/ingest-traffic`
+**URL:** `https://chakravyuh-sentinel-web.onrender.com/api/ingest-traffic`
+
+The ingestion sender must use the same backend hostname as the dashboard's `API_BASE`. Sending to a second Render service or an old hostname writes to a different database and those requests will not appear in this dashboard.
 
 **Method:** `POST`
 
@@ -14,6 +16,7 @@ The endpoint expects a JSON request body with the following structure:
 ```json
 {
   "ip": "string (required)",
+  "source_site": "string (optional, defaults to x-beauty)",
   "method": "string (required)",
   "endpoint": "string (required)", 
   "status_code": "integer (required)",
@@ -28,6 +31,7 @@ The endpoint expects a JSON request body with the following structure:
 
 ### Field Descriptions
 - **ip** (required): Client IP address
+- **source_site** (optional): Protected website identifier. Defaults to `x-beauty`; send a distinct identifier for each integrated site.
 - **method** (required): HTTP method (GET, POST, PUT, DELETE, etc.)
 - **endpoint** (required): URL path (e.g., "/about", "/api/contact")
 - **status_code** (required): HTTP response status code (e.g., 200, 404, 500)
@@ -42,6 +46,7 @@ The endpoint expects a JSON request body with the following structure:
 ```json
 {
   "ip": "192.168.1.100",
+  "source_site": "x-beauty",
   "method": "GET",
   "endpoint": "/about",
   "status_code": 200,
@@ -68,7 +73,7 @@ The endpoint expects a JSON request body with the following structure:
 - `Content-Type: application/json`
 
 ## CORS Configuration
-✅ **Confirmed:** `https://singhaman.me` is added to the allowed origins in the CORS configuration.
+Traffic capture is a server-to-server POST, so CORS is not required for ingestion. The X-Beauty browser origin still needs to be included in CORS settings if its frontend calls Sentinel APIs directly.
 
 ## Security Pipeline
 The ingested traffic automatically goes through the existing Sentinel pipeline:
@@ -82,7 +87,7 @@ The ingested traffic automatically goes through the existing Sentinel pipeline:
 
 ## Integration Flow
 ```
-User → singhaman.me → traffic capture → POST /api/ingest-traffic → 
+User → X-Beauty → traffic capture → POST /api/ingest-traffic →
 Sentinel RequestLog → Session Builder → Behavior ML → Agent → 
 Alert/Block → Sentinel Dashboard
 ```
@@ -93,15 +98,18 @@ No authentication required for this endpoint. The system relies on IP-based anal
 ## Error Handling
 The endpoint returns appropriate error responses:
 - `400`: Invalid request data
+- `422`: Invalid/missing payload fields (including an invalid ISO-8601 timestamp)
 - `500`: Server error during processing
 
 Example error response:
 ```json
 {
-  "success": false,
-  "message": "Failed to ingest traffic: <error details>"
+  "detail": "Traffic ingestion failed"
 }
 ```
+
+## Dashboard traffic source
+The `sessions`, `requests`, `stats`, and `statistics` dashboard APIs default to `source_site=x-beauty`, so the dashboard's request KPIs and charts show X-Beauty traffic rather than Sentinel API traffic. Use `source_site=all` to inspect every source, or pass a specific site identifier. Existing rows from before source tracking was added are retained as `unknown`; their origin cannot be reliably inferred retroactively.
 
 ## Important Notes
 - The system respects the existing `SESSION_EVAL_THRESHOLD` (5 requests) for behavior evaluation
@@ -117,5 +125,5 @@ Example error response:
 ## Next Steps
 1. Monitor the Render dashboard for deployment completion
 2. Test the production endpoint with sample traffic data
-3. Implement the traffic capture logic on singhaman.me
+3. Implement or verify the traffic capture logic on X-Beauty
 4. Monitor the Sentinel dashboard for incoming traffic and security alerts

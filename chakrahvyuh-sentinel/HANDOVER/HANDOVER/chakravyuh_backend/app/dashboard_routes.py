@@ -21,14 +21,25 @@ def _iso(dt) -> Optional[str]:
     return dt.isoformat() if dt else None
 
 
+def _alerts_for_source(db: Session, source_site: str):
+    query = db.query(SecurityAlert)
+    if source_site.strip().lower() != "all":
+        query = query.join(
+            SessionRecord,
+            SecurityAlert.session_id == SessionRecord.session_id,
+        ).filter(SessionRecord.source_site == source_site.strip().lower())
+    return query
+
+
 @router.get("/alerts")
 def list_alerts(
     db: Session = Depends(get_db),
     limit: int = Query(100, ge=1, le=500),
     unread_only: bool = False,
+    source_site: str = "x-beauty",
 ):
     """Fetch security alerts for the dashboard."""
-    query = db.query(SecurityAlert)
+    query = _alerts_for_source(db, source_site)
     if unread_only:
         query = query.filter(SecurityAlert.is_read.is_(False))
 
@@ -97,11 +108,15 @@ def list_requests(
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     ip: Optional[str] = None,
+    source_site: str = "x-beauty",
 ):
     """Fetch request log entries."""
     query = db.query(RequestLog)
     if ip:
         query = query.filter(RequestLog.ip == ip)
+    source_site = source_site.strip().lower()
+    if source_site != "all":
+        query = query.filter(RequestLog.source_site == source_site)
 
     logs = (
         query.order_by(RequestLog.timestamp.desc())
@@ -115,6 +130,7 @@ def list_requests(
             "id": r.id,
             "timestamp": _iso(r.timestamp),
             "ip": r.ip,
+            "source_site": r.source_site,
             "method": r.method,
             "endpoint": r.endpoint,
             "status_code": r.status_code,
@@ -133,11 +149,15 @@ def list_sessions(
     db: Session = Depends(get_db),
     limit: int = Query(100, ge=1, le=500),
     status: Optional[str] = None,
+    source_site: str = "x-beauty",
 ):
     """Fetch session records."""
     query = db.query(SessionRecord)
     if status:
         query = query.filter(SessionRecord.status == status)
+    source_site = source_site.strip().lower()
+    if source_site != "all":
+        query = query.filter(SessionRecord.source_site == source_site)
 
     sessions = (
         query.order_by(SessionRecord.last_activity.desc())
@@ -149,6 +169,7 @@ def list_sessions(
         {
             "session_id": s.session_id,
             "ip": s.ip,
+            "source_site": s.source_site,
             "started_at": _iso(s.started_at),
             "last_activity": _iso(s.last_activity),
             "duration_seconds": s.duration_seconds,
@@ -160,41 +181,32 @@ def list_sessions(
 
 
 @router.get("/stats")
-def get_stats(db: Session = Depends(get_db)):
+def get_stats(
+    db: Session = Depends(get_db),
+    source_site: str = "x-beauty",
+):
     """Dashboard header KPIs."""
     now = datetime.now(timezone.utc)
     since_24h = now - timedelta(hours=24)
+    source_site = source_site.strip().lower()
 
-    try:
-        total_requests = db.query(RequestLog).count()
-        active_sessions = (
-            db.query(SessionRecord)
-            .filter(SessionRecord.status == "active")
-            .count()
-        )
-        total_alerts = db.query(SecurityAlert).count()
-        unread_alerts = (
-            db.query(SecurityAlert)
-            .filter(SecurityAlert.is_read.is_(False))
-            .count()
-        )
-        active_blocked_ips = (
-            db.query(BlockedIP)
-            .filter(BlockedIP.is_active.is_(True))
-            .count()
-        )
-        requests_24h = (
-            db.query(RequestLog)
-            .filter(RequestLog.timestamp >= since_24h)
-            .count()
-        )
-    except Exception:
-        total_requests = 0
-        active_sessions = 0
-        total_alerts = 0
-        unread_alerts = 0
-        active_blocked_ips = 0
-        requests_24h = 0
+    request_query = db.query(RequestLog)
+    session_query = db.query(SessionRecord).filter(SessionRecord.status == "active")
+    if source_site != "all":
+        request_query = request_query.filter(RequestLog.source_site == source_site)
+        session_query = session_query.filter(SessionRecord.source_site == source_site)
+    total_requests = request_query.count()
+    active_sessions = session_query.count()
+    alert_query = _alerts_for_source(db, source_site)
+    total_alerts = alert_query.count()
+    unread_alerts = alert_query.filter(SecurityAlert.is_read.is_(False)).count()
+    active_blocked_ips = (
+        db.query(BlockedIP)
+        .filter(BlockedIP.is_active.is_(True))
+        .count()
+    )
+    requests_24h_query = request_query.filter(RequestLog.timestamp >= since_24h)
+    requests_24h = requests_24h_query.count()
 
     return {
         "status": "running",
@@ -208,13 +220,17 @@ def get_stats(db: Session = Depends(get_db)):
 
 
 @router.get("/statistics")
-def get_statistics(db: Session = Depends(get_db)):
+def get_statistics(
+    db: Session = Depends(get_db),
+    source_site: str = "x-beauty",
+):
     """Extended analytics for dashboard charts."""
     now = datetime.now(timezone.utc)
     since_7d = now - timedelta(days=7)
+    source_site = source_site.strip().lower()
 
     # Agent decision distribution from alerts
-    alert_rows = db.query(
+    alert_rows = _alerts_for_source(db, source_site).with_entities(
         SecurityAlert.prediction,
         func.count(SecurityAlert.id),
     ).group_by(SecurityAlert.prediction).all()
@@ -230,8 +246,12 @@ def get_statistics(db: Session = Depends(get_db)):
     total_decisions = sum(decision_counts.values()) or 1
 
     # HTTP status code distribution (last 7 days)
+    request_query = db.query(RequestLog)
+    if source_site != "all":
+        request_query = request_query.filter(RequestLog.source_site == source_site)
+
     status_rows = (
-        db.query(RequestLog.status_code, func.count(RequestLog.id))
+        request_query.with_entities(RequestLog.status_code, func.count(RequestLog.id))
         .filter(RequestLog.timestamp >= since_7d)
         .group_by(RequestLog.status_code)
         .all()
@@ -240,7 +260,7 @@ def get_statistics(db: Session = Depends(get_db)):
 
     # Daily request counts (last 7 days)
     daily_rows = (
-        db.query(
+        request_query.with_entities(
             func.date(RequestLog.timestamp).label("day"),
             func.count(RequestLog.id),
         )
@@ -272,7 +292,7 @@ def get_statistics(db: Session = Depends(get_db)):
 
     # Top IPs by request count
     top_ip_rows = (
-        db.query(RequestLog.ip, func.count(RequestLog.id).label("cnt"))
+        request_query.with_entities(RequestLog.ip, func.count(RequestLog.id).label("cnt"))
         .filter(RequestLog.timestamp >= since_7d)
         .group_by(RequestLog.ip)
         .order_by(func.count(RequestLog.id).desc())

@@ -391,5 +391,52 @@ class TestPipelineAndIncidentIntegration(unittest.TestCase):
         self.assertEqual(closed.status, "CLOSED")
 
 
+class TestTrafficIngestionSource(unittest.TestCase):
+    def test_ingested_site_traffic_is_separated_from_sentinel_traffic(self):
+        client = TestClient(app)
+        ip = "198.51.100.201"
+        payload = {
+            "ip": ip,
+            "method": "GET",
+            "endpoint": "/shop/products",
+            "status_code": 200,
+            "timestamp": "2026-10-20T12:00:00Z",
+        }
+
+        baseline_requests = client.get("/stats").json()["total_requests"]
+        response = client.post("/api/ingest-traffic", json=payload)
+        self.assertEqual(response.status_code, 200, response.text)
+        result = response.json()
+        self.assertTrue(result["success"])
+
+        protected_site_logs = client.get("/requests", params={"ip": ip}).json()
+        self.assertEqual(len(protected_site_logs), 1)
+        self.assertEqual(protected_site_logs[0]["source_site"], "x-beauty")
+        self.assertEqual(protected_site_logs[0]["endpoint"], "/shop/products")
+
+        sentinel_logs = client.get(
+            "/requests",
+            params={"ip": ip, "source_site": "sentinel"},
+        ).json()
+        self.assertEqual(sentinel_logs, [])
+
+        stats = client.get("/stats").json()
+        self.assertEqual(stats["total_requests"], baseline_requests + 1)
+        self.assertGreaterEqual(stats["active_sessions"], 1)
+
+    def test_invalid_ingestion_timestamp_is_rejected(self):
+        response = TestClient(app).post(
+            "/api/ingest-traffic",
+            json={
+                "ip": "198.51.100.202",
+                "method": "GET",
+                "endpoint": "/",
+                "status_code": 200,
+                "timestamp": "not-a-timestamp",
+            },
+        )
+        self.assertEqual(response.status_code, 422)
+
+
 if __name__ == "__main__":
     unittest.main()

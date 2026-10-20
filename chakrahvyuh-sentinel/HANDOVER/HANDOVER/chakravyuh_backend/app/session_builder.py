@@ -13,12 +13,21 @@ from app.db_models import SessionRecord
 from app.config import SESSION_TIMEOUT_MINUTES
 
 
-def get_or_create_session(db: DBSession, ip: str) -> SessionRecord:
+def get_or_create_session(
+    db: DBSession,
+    ip: str,
+    source_site: str = "sentinel",
+) -> SessionRecord:
+    source_site = source_site.strip().lower()
     now = datetime.now(timezone.utc)
 
     active_session = (
         db.query(SessionRecord)
-        .filter(SessionRecord.ip == ip, SessionRecord.status == "active")
+        .filter(
+            SessionRecord.ip == ip,
+            SessionRecord.source_site == source_site,
+            SessionRecord.status == "active",
+        )
         .order_by(SessionRecord.last_activity.desc())
         .first()
     )
@@ -37,6 +46,7 @@ def get_or_create_session(db: DBSession, ip: str) -> SessionRecord:
     if active_session is None:
         active_session = SessionRecord(
             ip=ip,
+            source_site=source_site,
             started_at=now,
             last_activity=now,
             duration_seconds=0.0,

@@ -5,7 +5,7 @@ This is intentionally separate from the ML pipelines — nothing here imports
 or touches model_loader.py, feature_extractor.py, or agent.py (URL pipeline).
 """
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 from app.config import DATABASE_URL
@@ -45,3 +45,13 @@ def init_db():
     from app import db_models  # noqa: F401  (registers models on Base)
 
     Base.metadata.create_all(bind=engine)
+    for table_name in ("sessions", "request_logs"):
+        columns = {column["name"] for column in inspect(engine).get_columns(table_name)}
+        if "source_site" not in columns:
+            with engine.begin() as connection:
+                connection.execute(
+                    text(
+                        f"ALTER TABLE {table_name} "
+                        "ADD COLUMN source_site VARCHAR(100) NOT NULL DEFAULT 'unknown'"
+                    )
+                )

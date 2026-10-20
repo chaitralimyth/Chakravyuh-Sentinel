@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -14,7 +15,7 @@ from app.model_loader import lr_model, rf_model, xgb_model, predict_url
 from app.utils import track_ip
 
 # Security / behavior / incident pipeline
-from app.database import init_db, SessionLocal, get_db
+from app.database import init_db, get_db
 from app.security_middleware import IPBlockMiddleware
 from app.blocking_service import is_ip_blocked
 from app.request_logging_middleware import RequestLoggingMiddleware
@@ -28,6 +29,7 @@ from app.incident_service import get_incident, close_incident, get_incidents
 from app.explanation_service import generate_incident_explanation
 
 app = FastAPI(title="Chakravyuh Sentinel API")
+logger = logging.getLogger(__name__)
 
 # Middleware: innermost first, CORS outermost (handles OPTIONS preflight)
 # Order: RequestLogging -> IPBlock -> RateLimit -> CORS
@@ -61,12 +63,13 @@ class URLPayload(BaseModel):
 
 
 class TrafficIngestRequest(BaseModel):
-    """Request schema for external traffic ingestion from singhaman.me"""
+    """Request schema for external traffic ingestion from a protected website."""
     ip: str = Field(..., description="Client IP address")
+    source_site: str = Field(default="x-beauty", min_length=1, max_length=100)
     method: str = Field(..., description="HTTP method (GET, POST, etc.)")
     endpoint: str = Field(..., description="URL path")
     status_code: int = Field(..., description="HTTP response status code")
-    timestamp: str = Field(..., description="ISO-8601 timestamp")
+    timestamp: datetime = Field(..., description="ISO-8601 timestamp")
     request_size: int = Field(default=0, description="Request size in bytes")
     response_size: int = Field(default=0, description="Response size in bytes")
     response_time_ms: float = Field(default=0.0, description="Response time in milliseconds")
@@ -157,29 +160,28 @@ def predict_url_endpoint(payload: URLPayload):
 
 
 @app.post("/api/ingest-traffic")
-def ingest_traffic(payload: TrafficIngestRequest):
+def ingest_traffic(payload: TrafficIngestRequest, db: Session = Depends(get_db)):
     """
-    Ingest external traffic data from singhaman.me into the unified Sentinel pipeline.
+    Ingest protected-site traffic into the unified Sentinel pipeline.
     Processing: RequestLog → Session Builder → Behavior ML + URL ML → Dynamic Risk Engine → Adaptive Agent
     """
-    db = SessionLocal()
-    try:
-        # Parse timestamp
-        try:
-            request_timestamp = datetime.fromisoformat(payload.timestamp.replace('Z', '+00:00'))
-            if request_timestamp.tzinfo is None:
-                request_timestamp = request_timestamp.replace(tzinfo=timezone.utc)
-        except ValueError:
-            request_timestamp = datetime.now(timezone.utc)
+    source_site = payload.source_site.strip().lower()
+    if not source_site:
+        raise HTTPException(status_code=422, detail="source_site must not be blank")
 
-        # Get or create session for this IP
-        session = get_or_create_session(db, payload.ip)
+    try:
+        request_timestamp = payload.timestamp
+        if request_timestamp.tzinfo is None:
+            request_timestamp = request_timestamp.replace(tzinfo=timezone.utc)
+
+        session = get_or_create_session(db, payload.ip, source_site=source_site)
 
         # Create request log entry
         log = RequestLog(
             session_id=session.session_id,
             timestamp=request_timestamp,
             ip=payload.ip,
+            source_site=source_site,
             method=payload.method,
             endpoint=payload.endpoint,
             status_code=payload.status_code,
@@ -240,14 +242,10 @@ def ingest_traffic(payload: TrafficIngestRequest):
             "rate_limit_info": rate_info,
         }
 
-    except Exception as e:
+    except Exception as exc:
         db.rollback()
-        return {
-            "success": False,
-            "message": f"Failed to ingest traffic: {str(e)}",
-        }
-    finally:
-        db.close()
+        logger.exception("Traffic ingestion failed for source_site=%s", source_site)
+        raise HTTPException(status_code=500, detail="Traffic ingestion failed") from exc
 
 
 @app.get("/api/check-ip/{ip}")

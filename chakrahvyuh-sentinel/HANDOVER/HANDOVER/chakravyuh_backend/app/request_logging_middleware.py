@@ -70,12 +70,13 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
         db = SessionLocal()
         try:
-            session = get_or_create_session(db, client_ip)
+            session = get_or_create_session(db, client_ip, source_site="sentinel")
 
             log = RequestLog(
                 session_id=session.session_id,
                 timestamp=request_timestamp,
                 ip=client_ip,
+                source_site="sentinel",
                 method=request.method,
                 endpoint=request.url.path,
                 status_code=response.status_code,

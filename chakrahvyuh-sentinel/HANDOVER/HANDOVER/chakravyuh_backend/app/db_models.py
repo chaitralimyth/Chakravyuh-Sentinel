@@ -37,6 +37,7 @@ class SessionRecord(Base):
 
     session_id = Column(String(32), primary_key=True, default=new_session_id)
     ip = Column(String(64), nullable=False, index=True)
+    source_site = Column(String(100), nullable=False, default="sentinel", server_default="unknown")
     started_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     last_activity = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     duration_seconds = Column(Float, default=0.0, nullable=False)
@@ -57,6 +58,7 @@ class RequestLog(Base):
     session_id = Column(String(32), ForeignKey("sessions.session_id"), nullable=True, index=True)
     timestamp = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     ip = Column(String(64), nullable=False, index=True)
+    source_site = Column(String(100), nullable=False, default="sentinel", server_default="unknown")
     method = Column(String(10), nullable=False)
     endpoint = Column(String(512), nullable=False)
     status_code = Column(Integer, nullable=False)
