@@ -74,19 +74,41 @@ def evaluate_session_security(
     except Exception as e:
         print("[SENTINEL URL ML EVAL ERROR]", repr(e))
 
-    # 3. Contextual feature extraction
+    # 3. Contextual feature extraction & SQL injection check
+    from app.sqli_detector import detect_sqli
+
     features_dict = build_feature_dict(rows)
     request_rate_score = calculate_request_rate_score(features_dict.get("max_requests_per_second", 0))
     auth_failure_score = calculate_auth_failure_score(features_dict.get("auth_failure_ratio", 0.0))
     endpoint_risk_score = calculate_endpoint_risk(url_to_eval)
 
-    # 4. Harshad Dynamic Risk Engine (composite 0-100 scoring)
+    sqli_found = False
+    max_sqli_conf = 0.0
+    sqli_pattern = None
+
+    url_sqli = detect_sqli(url_to_eval)
+    if url_sqli["is_sqli"]:
+        sqli_found = True
+        max_sqli_conf = max(max_sqli_conf, url_sqli["confidence"])
+        sqli_pattern = url_sqli["matched_patterns"][0] if url_sqli["matched_patterns"] else "SQLi payload"
+
+    for r in rows:
+        if r.query_data:
+            q_sqli = detect_sqli(r.query_data)
+            if q_sqli["is_sqli"]:
+                sqli_found = True
+                max_sqli_conf = max(max_sqli_conf, q_sqli["confidence"])
+                if not sqli_pattern and q_sqli["matched_patterns"]:
+                    sqli_pattern = q_sqli["matched_patterns"][0]
+
+    # 4. Harshad Dynamic Risk Engine (composite 0-100 scoring with SQLi threat elevation)
     risk_dict = calculate_risk(
         url_attack_probability=url_attack_prob,
         behavior_attack_probability=behavior_attack_prob,
         request_rate_score=request_rate_score,
         auth_failure_score=auth_failure_score,
         endpoint_risk_score=endpoint_risk_score,
+        sqli_score=max_sqli_conf if sqli_found else 0.0,
     )
     risk_score = float(risk_dict["risk_score"])
     severity = str(risk_dict["severity"])
@@ -101,6 +123,8 @@ def evaluate_session_security(
         "auth_failure_ratio": features_dict.get("auth_failure_ratio", 0.0),
         "admin_endpoint_access": features_dict.get("admin_endpoint_access", 0),
         "request_count": session.request_count,
+        "sqli_detected": sqli_found,
+        "sqli_pattern": sqli_pattern,
     }
 
     decision = decide_adaptive_security(

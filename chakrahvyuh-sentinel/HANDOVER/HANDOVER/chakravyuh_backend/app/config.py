@@ -89,19 +89,15 @@ if BLOCK_DURATION_MINUTES <= 0:
 # ---------------------------------------------------------
 
 # Comma-separated list of allowed origins for CORS.
-# Use "*" for development (unrestricted), or specific domains for production.
-# Example: "https://your-frontend.netlify.app,https://your-domain.com"
-# For local development: "http://localhost:3000,http://127.0.0.1:5500"
-
+# Use "*" to accept all external websites, or specify comma-separated domains.
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*")
 
 if CORS_ORIGINS == "*":
-    # Development mode: allow all origins
+    # Accept requests from all origins (any website or client application)
     ALLOWED_ORIGINS = ["*"]
 else:
-    # Production mode: parse comma-separated origins
+    # Parse comma-separated origins
     ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ORIGINS.split(",") if origin.strip()]
-    # Always ensure singhaman.me is included for the integration
     if not any(origin.lower() == "https://singhaman.me" for origin in ALLOWED_ORIGINS):
         ALLOWED_ORIGINS.append("https://singhaman.me")
 
@@ -137,7 +133,7 @@ RATE_LIMIT_WINDOW_SECONDS = _get_int('RATE_LIMIT_WINDOW_SECONDS', 60)
 # Rate limiting: burst capacity (allows short bursts above normal rate)
 RATE_LIMIT_BURST = _get_int('RATE_LIMIT_BURST', 20)
 
-# Paths exempt from rate limiting (health checks, docs, etc.)
+# Paths exempt from rate limiting (health checks, docs, external website ingestion, etc.)
 RATE_LIMIT_EXEMPT_PATHS = {
     "/",
     "/health",
@@ -146,4 +142,8 @@ RATE_LIMIT_EXEMPT_PATHS = {
     "/openapi.json",
     "/stats",
     "/statistics",
+    "/api/ingest-traffic",
+    "/api/ingest-traffic/batch",
+    "/api/logs",
+    "/api/check-ip",
 }

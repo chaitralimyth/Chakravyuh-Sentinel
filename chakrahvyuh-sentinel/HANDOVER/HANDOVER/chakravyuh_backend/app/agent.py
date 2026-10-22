@@ -1,7 +1,17 @@
+from app.sqli_detector import detect_sqli
+
+
 def decide(score, url):
     url_lower = url.lower()
 
     reasons = []
+
+    # 🔴 SQL injection detection (Critical priority)
+    sqli_res = detect_sqli(url)
+    if sqli_res["is_sqli"]:
+        pattern = sqli_res["matched_patterns"][0] if sqli_res["matched_patterns"] else "SQLi syntax"
+        reasons.append(f"SQL injection attack payload detected: {pattern}")
+        return "BLOCK", reasons
 
     # 🔴 keyword detection
     suspicious_keywords = [

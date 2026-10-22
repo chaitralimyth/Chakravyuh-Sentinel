@@ -28,16 +28,20 @@ from datetime import datetime, timezone
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
+import logging
 from app.database import SessionLocal
 from app.db_models import RequestLog
 from app.session_builder import get_or_create_session, touch_session
 from app.config import SESSION_EVAL_THRESHOLD
 from app.security_pipeline import evaluate_session_security
+from app.ip_service import get_client_ip
+
+logger = logging.getLogger(__name__)
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
-        client_ip = request.client.host if request.client else "unknown"
+        client_ip = get_client_ip(request)
         request_timestamp = datetime.now(timezone.utc)
         start = time.perf_counter()
 
@@ -68,37 +72,41 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             background=response.background,
         )
 
-        db = SessionLocal()
+        # Fail-Open Resilience: Database logging failure must NEVER crash the request
         try:
-            session = get_or_create_session(db, client_ip, source_site="sentinel")
+            db = SessionLocal()
+            try:
+                session = get_or_create_session(db, client_ip, source_site="sentinel")
 
-            log = RequestLog(
-                session_id=session.session_id,
-                timestamp=request_timestamp,
-                ip=client_ip,
-                source_site="sentinel",
-                method=request.method,
-                endpoint=request.url.path,
-                status_code=response.status_code,
-                request_size=request_size,
-                response_size=len(response_body),
-                response_time_ms=response_time_ms,
-                query_length=query_length,
-                query_data=query_string[:2000],  # truncate to avoid unbounded storage
-            )
-            db.add(log)
-            db.commit()
-
-            session = touch_session(db, session)
-
-            if session.request_count > 0 and session.request_count % SESSION_EVAL_THRESHOLD == 0:
-                evaluate_session_security(
-                    db=db,
-                    session=session,
-                    client_ip=client_ip,
-                    current_url=request.url.path,
+                log = RequestLog(
+                    session_id=session.session_id,
+                    timestamp=request_timestamp,
+                    ip=client_ip,
+                    source_site="sentinel",
+                    method=request.method,
+                    endpoint=request.url.path,
+                    status_code=response.status_code,
+                    request_size=request_size,
+                    response_size=len(response_body),
+                    response_time_ms=response_time_ms,
+                    query_length=query_length,
+                    query_data=query_string[:2000],  # truncate to avoid unbounded storage
                 )
-        finally:
-            db.close()
+                db.add(log)
+                db.commit()
+
+                session = touch_session(db, session)
+
+                if session.request_count > 0 and session.request_count % SESSION_EVAL_THRESHOLD == 0:
+                    evaluate_session_security(
+                        db=db,
+                        session=session,
+                        client_ip=client_ip,
+                        current_url=request.url.path,
+                    )
+            finally:
+                db.close()
+        except Exception as e:
+            logger.error(f"Fail-open: request telemetry logging failed: {e}")
 
         return new_response

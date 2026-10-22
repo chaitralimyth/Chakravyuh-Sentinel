@@ -206,6 +206,11 @@ class AdaptiveSecurityAgent:
                 reasons.append(f"Sensitive/admin endpoint probe detected ({admin_val} request{'s' if admin_val > 1 else ''})")
 
         # Suspicious query keywords count (SQLi/XSS probes)
+        if context.get("sqli_detected"):
+            pattern = context.get("sqli_pattern") or "SQLi syntax"
+            contributing_factors["sqli_detected"] = True
+            reasons.append(f"SQL injection attack payload detected ({pattern})")
+
         query_kw = context.get("suspicious_query_keywords")
         if query_kw is not None and isinstance(query_kw, (int, float)):
             query_val = int(query_kw)

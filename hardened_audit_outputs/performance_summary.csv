@@ -1,11 +1,11 @@
 component_category,name,iterations,mean_latency,median_p50,p95_latency,p99_latency,throughput,scope_notes
-Model Inference,URL Logistic Regression (50 feats),1000,142.38 µs,117.15 µs,304.94 µs,461.4 µs,7023.3 inf/s,Isolated in-memory predict_proba; excludes unpickling
-Model Inference,"URL XGBoost (200 trees, 50 feats)",1000,455.55 µs,449.85 µs,602.03 µs,843.23 µs,2195.2 inf/s,Isolated in-memory predict_proba; excludes unpickling
-Model Inference,"URL Random Forest (100 trees, 50 feats)",1000,7373.45 µs (7.37 ms),6281.7 µs,13335.88 µs,22723.97 µs,135.6 inf/s,Isolated in-memory predict_proba; excludes unpickling
-Model Inference,"Behavioral Random Forest (200 trees, 28 feats)",1000,12368.76 µs (12.37 ms),11966.7 µs,15288.19 µs,18400.96 µs,80.8 inf/s,Isolated in-memory predict_proba; excludes unpickling
-Feature Extraction,URL Feature Extraction (50 features),500,31.1 µs,29.15 µs,39.01 µs,58.1 µs,32150.6 ops/s,"String parsing, regex, lexical counts, TLD checks"
-Feature Extraction,Behavioral Feature Extraction (28 features),500,33.66 µs,31.55 µs,38.45 µs,72.33 µs,29710.6 ops/s,"Shannon entropy, intervals, switch rates on 5-request session"
-Evidence Fusion,Dynamic Multi-Signal Risk Engine,500,5.08 µs,5.0 µs,5.4 µs,9.2 µs,196974.5 ops/s,Affine linear combination of 5 sub-signals
-Decision Policy,Adaptive Security Agent Decision,500,6.12 µs,5.8 µs,10.0 µs,10.4 µs,163377.3 ops/s,Deterministic threshold check + explainability reasons generation
-End-to-End Pipeline,Isolated In-Memory Pipeline (Stages 1-6),500,25.10 ms (25103.65 µs),24.37 ms,27.64 ms,31.66 ms,39.8 ops/s,"Excludes network RTT, Starlette ASGI parsing, SQLite commits"
-Full-Stack Application,Full-Stack ASGI HTTP Ingest (/api/ingest-traffic),200,21.06 ms (21057.52 µs),11.23 ms,107.78 ms,122.63 ms,47.5 req/s,"120 allowed (HTTP 200), 80 throttled (HTTP 429), 0 unexpected errors"
+Model Inference,URL Logistic Regression (50 feats),1000,95.15 µs,82.75 µs,156.04 µs,263.14 µs,10509.6 inf/s,Isolated in-memory predict_proba; excludes unpickling
+Model Inference,"URL XGBoost (200 trees, 50 feats)",1000,437.37 µs,366.4 µs,763.25 µs,1871.39 µs,2286.4 inf/s,Isolated in-memory predict_proba; excludes unpickling
+Model Inference,"URL Random Forest (100 trees, 50 feats)",1000,18215.2 µs (18.22 ms),17216.0 µs,24855.38 µs,29757.56 µs,54.9 inf/s,Isolated in-memory predict_proba; excludes unpickling
+Model Inference,"Behavioral Random Forest (200 trees, 28 feats)",1000,32700.05 µs (32.70 ms),32621.7 µs,36560.0 µs,41420.03 µs,30.6 inf/s,Isolated in-memory predict_proba; excludes unpickling
+Feature Extraction,URL Feature Extraction (50 features),500,81.07 µs,74.3 µs,112.48 µs,247.98 µs,12335.0 ops/s,"String parsing, regex, lexical counts, TLD checks"
+Feature Extraction,Behavioral Feature Extraction (28 features),500,96.45 µs,89.5 µs,148.52 µs,234.15 µs,10368.3 ops/s,"Shannon entropy, intervals, switch rates on 5-request session"
+Evidence Fusion,Dynamic Multi-Signal Risk Engine,500,16.75 µs,15.0 µs,26.7 µs,31.1 µs,59700.1 ops/s,Affine linear combination of 5 sub-signals
+Decision Policy,Adaptive Security Agent Decision,500,16.89 µs,16.5 µs,17.41 µs,28.7 µs,59212.2 ops/s,Deterministic threshold check + explainability reasons generation
+End-to-End Pipeline,Isolated In-Memory Pipeline (Stages 1-6),500,51.13 ms (51130.64 µs),63.99 ms,70.19 ms,78.60 ms,19.6 ops/s,"Excludes network RTT, Starlette ASGI parsing, SQLite commits"
+Full-Stack Application,Full-Stack ASGI HTTP Ingest (/api/ingest-traffic),200,22.43 ms (22433.23 µs),8.80 ms,80.40 ms,88.29 ms,44.6 req/s,"120 allowed (HTTP 200), 80 throttled (HTTP 429), 0 unexpected errors"

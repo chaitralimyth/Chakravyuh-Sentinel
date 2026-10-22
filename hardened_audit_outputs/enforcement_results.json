@@ -15,7 +15,7 @@
       "rate_limit_info": {
         "limit": 100,
         "remaining": 100,
-        "reset": 1792224330,
+        "reset": 1792695225,
         "window": 60,
         "current": 0
       }
@@ -26,13 +26,15 @@
     "category": "IP Blocking Enforcement",
     "description": "Request to protected route from blocked IP (198.51.100.99)",
     "expected_behavior": "HTTP 403 Forbidden prior to route execution",
-    "observed_behavior": "HTTP 403, body={\"detail\":\"Forbidden: IP blocked by Sentinel\"}",
+    "observed_behavior": "HTTP 403, body={\"detail\":\"Forbidden: IP blocked by Sentinel\",\"action\":\"BLOCK\",\"ip\":\"198.51.100.99\"}",
     "status": "PASS",
     "finding": "Pre-route IPBlockMiddleware successfully intercepts blocked IP before route handling",
     "evidence": {
       "status_code": 403,
       "body": {
-        "detail": "Forbidden: IP blocked by Sentinel"
+        "detail": "Forbidden: IP blocked by Sentinel",
+        "action": "BLOCK",
+        "ip": "198.51.100.99"
       }
     }
   },
@@ -71,7 +73,7 @@
     "evidence": {
       "limit": 3,
       "remaining": 0,
-      "reset": 1792224330,
+      "reset": 1792695225,
       "window": 60,
       "current": 3
     }
@@ -102,14 +104,14 @@
         "current": 0,
         "limit": 100,
         "remaining": 100,
-        "reset": 1792224330,
+        "reset": 1792695225,
         "window": 60
       },
       "rate_after": {
         "current": 0,
         "limit": 100,
         "remaining": 100,
-        "reset": 1792224330,
+        "reset": 1792695225,
         "window": 60
       }
     }
@@ -119,14 +121,14 @@
     "category": "Pipeline Correlation",
     "description": "Telemetry ingestion triggering periodic session evaluation at N=5",
     "expected_behavior": "Session evaluated at count=5; SecurityAlert and SecurityIncident generated",
-    "observed_behavior": "Alerts before: 0, Alerts after: 1, Incident created: True",
+    "observed_behavior": "Alerts before: 0, Alerts after: 5, Incident created: True",
     "status": "PASS",
     "finding": "Full pipeline verified: Ingest -> RequestLog -> SessionBuilder -> 28 Features -> ML -> Risk -> Agent -> SecurityAlert -> SecurityIncident",
     "evidence": {
-      "session_id": "1416c92a060b4d009fedfb2173a560c2",
+      "session_id": "19af898b5e73446d8a8f2b7266d8dea4",
       "request_count": 5,
-      "incident_severity": "HIGH",
-      "incident_action": "RATE_LIMIT"
+      "incident_severity": "CRITICAL",
+      "incident_action": "BLOCK"
     }
   }
 ]

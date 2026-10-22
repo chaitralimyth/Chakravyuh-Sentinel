@@ -7,12 +7,13 @@ These routes only query PostgreSQL — they do not run ML, blocking, or alerts.
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.db_models import BlockedIP, RequestLog, SecurityAlert, SessionRecord
+from app.sqli_detector import detect_sqli
 
 router = APIRouter(tags=["dashboard"])
 
@@ -109,14 +110,27 @@ def list_requests(
     offset: int = Query(0, ge=0),
     ip: Optional[str] = None,
     source_site: str = "x-beauty",
+    endpoint: Optional[str] = None,
+    session_id: Optional[str] = None,
 ):
-    """Fetch request log entries."""
+    """Fetch request log entries with optional filters."""
+    for param_name, param_val in [("ip", ip), ("endpoint", endpoint), ("session_id", session_id)]:
+        if param_val and detect_sqli(param_val)["is_sqli"]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid {param_name} parameter: SQL injection pattern detected",
+            )
+
     query = db.query(RequestLog)
     if ip:
         query = query.filter(RequestLog.ip == ip)
     source_site = source_site.strip().lower()
     if source_site != "all":
         query = query.filter(RequestLog.source_site == source_site)
+    if endpoint:
+        query = query.filter(RequestLog.endpoint.contains(endpoint))
+    if session_id:
+        query = query.filter(RequestLog.session_id == session_id)
 
     logs = (
         query.order_by(RequestLog.timestamp.desc())
@@ -138,6 +152,7 @@ def list_requests(
             "response_size": r.response_size,
             "response_time_ms": r.response_time_ms,
             "query_length": r.query_length,
+            "query_data": r.query_data,
             "session_id": r.session_id,
         }
         for r in logs

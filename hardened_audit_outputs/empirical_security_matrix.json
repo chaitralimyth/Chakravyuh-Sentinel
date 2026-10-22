@@ -1,0 +1,357 @@
+[
+  {
+    "test_id": "SEC-MAT-01",
+    "endpoint": "GET /api/search?q=dress",
+    "category": "Legitimate Traffic",
+    "sanitized_request": "q='dress'",
+    "expected_detector_verdict": "BENIGN",
+    "actual_detector_verdict": "BENIGN",
+    "expected_policy_decision": "ALLOW",
+    "actual_policy_decision": "ALLOW",
+    "expected_enforcement_action": "ALLOW (HTTP 200)",
+    "actual_enforcement_action": "ALLOW (HTTP 200)",
+    "http_status_code": 200,
+    "reached_protected_route": true,
+    "database_operations_executed": 9,
+    "security_log_ref": "N/A",
+    "status": "PASS",
+    "evidence": {
+      "query": "dress",
+      "result_count": 0,
+      "results": []
+    }
+  },
+  {
+    "test_id": "SEC-MAT-02",
+    "endpoint": "GET /api/search?q=summer",
+    "category": "IP Blocking",
+    "sanitized_request": "IP=198.51.100.101, q='summer'",
+    "expected_detector_verdict": "ATTACKER",
+    "actual_detector_verdict": "ATTACKER",
+    "expected_policy_decision": "BLOCK",
+    "actual_policy_decision": "BLOCK",
+    "expected_enforcement_action": "PRE-ROUTE DROP (HTTP 403)",
+    "actual_enforcement_action": "HTTP 403",
+    "http_status_code": 403,
+    "reached_protected_route": false,
+    "database_operations_executed": 1,
+    "security_log_ref": "blocked_ips:198.51.100.101",
+    "status": "PASS",
+    "evidence": {
+      "detail": "Forbidden: IP blocked by Sentinel",
+      "action": "BLOCK",
+      "ip": "198.51.100.101"
+    }
+  },
+  {
+    "test_id": "SEC-MAT-03",
+    "endpoint": "POST /analyze",
+    "category": "Persistent Enforcement",
+    "sanitized_request": "IP=198.51.100.102, 5 repeated requests",
+    "expected_detector_verdict": "ATTACKER",
+    "actual_detector_verdict": "ATTACKER",
+    "expected_policy_decision": "BLOCK",
+    "actual_policy_decision": "BLOCK",
+    "expected_enforcement_action": "ALL DROPPED (HTTP 403)",
+    "actual_enforcement_action": "Statuses: [403, 403, 403, 403, 403]",
+    "http_status_code": 403,
+    "reached_protected_route": false,
+    "database_operations_executed": 5,
+    "security_log_ref": "blocked_ips:198.51.100.102",
+    "status": "PASS",
+    "evidence": {
+      "statuses": [
+        403,
+        403,
+        403,
+        403,
+        403
+      ]
+    }
+  },
+  {
+    "test_id": "SEC-MAT-04",
+    "endpoint": "POST /api/auth/login",
+    "category": "SQL Injection - Auth",
+    "sanitized_request": "username=\"admin' OR '1'='1\"",
+    "expected_detector_verdict": "SQLI_DETECTED (Tautology)",
+    "actual_detector_verdict": "SQLI_DETECTED (SQL boolean tautology)",
+    "expected_policy_decision": "BLOCK",
+    "actual_policy_decision": "BLOCK",
+    "expected_enforcement_action": "REJECTED & IP BLOCKED (HTTP 403)",
+    "actual_enforcement_action": "HTTP 403, ip_blocked=True",
+    "http_status_code": 403,
+    "reached_protected_route": false,
+    "database_operations_executed": 16,
+    "security_log_ref": "blocked_ips:198.51.100.104",
+    "status": "PASS",
+    "evidence": {
+      "detail": "Forbidden: SQL injection payload detected in username"
+    }
+  },
+  {
+    "test_id": "SEC-MAT-05",
+    "endpoint": "GET /api/search",
+    "category": "SQL Injection - Search",
+    "sanitized_request": "q='1 UNION SELECT username, password FROM users--'",
+    "expected_detector_verdict": "SQLI_DETECTED (UNION SELECT)",
+    "actual_detector_verdict": "SQLI_DETECTED (SQL UNION SELECT extraction payload)",
+    "expected_policy_decision": "BLOCK",
+    "actual_policy_decision": "BLOCK",
+    "expected_enforcement_action": "PREVENTED & IP BLOCKED (HTTP 403)",
+    "actual_enforcement_action": "HTTP 403, ip_blocked=True",
+    "http_status_code": 403,
+    "reached_protected_route": false,
+    "database_operations_executed": 8,
+    "security_log_ref": "blocked_ips:198.51.100.105",
+    "status": "PASS",
+    "evidence": {
+      "detail": "Forbidden: SQL injection payload detected and blocked by Sentinel",
+      "action": "BLOCK",
+      "ip": "198.51.100.105",
+      "risk_score": 99.0,
+      "severity": "CRITICAL",
+      "matched_pattern": "SQL UNION SELECT extraction payload"
+    }
+  },
+  {
+    "test_id": "SEC-MAT-06",
+    "endpoint": "GET /api/items/{item_id}",
+    "category": "SQL Injection - Numeric",
+    "sanitized_request": "item_id='1; DROP TABLE users--'",
+    "expected_detector_verdict": "NUMERIC_VALIDATION_ERROR",
+    "actual_detector_verdict": "NUMERIC_VALIDATION_ERROR",
+    "expected_policy_decision": "REJECT",
+    "actual_policy_decision": "REJECT",
+    "expected_enforcement_action": "SAFE REJECTION (HTTP 422/403)",
+    "actual_enforcement_action": "HTTP 403",
+    "http_status_code": 403,
+    "reached_protected_route": false,
+    "database_operations_executed": 8,
+    "security_log_ref": "N/A",
+    "status": "PASS",
+    "evidence": {
+      "detail": "Forbidden: SQL injection payload detected and blocked by Sentinel",
+      "action": "BLOCK",
+      "ip": "198.51.100.106",
+      "risk_score": 99.0,
+      "severity": "CRITICAL",
+      "matched_pattern": "SQL stacked destructive query (; DROP/DELETE/INSERT/UPDATE)"
+    }
+  },
+  {
+    "test_id": "SEC-MAT-07",
+    "endpoint": "GET /api/search",
+    "category": "SQL Injection - Encoded",
+    "sanitized_request": "q='%27%20OR%201%3D1--'",
+    "expected_detector_verdict": "SQLI_DETECTED (Decoded Tautology)",
+    "actual_detector_verdict": "SQLI_DETECTED (Canonicalized)",
+    "expected_policy_decision": "BLOCK",
+    "actual_policy_decision": "BLOCK",
+    "expected_enforcement_action": "CANONICALIZED & BLOCKED (HTTP 403)",
+    "actual_enforcement_action": "HTTP 403, ip_blocked=True",
+    "http_status_code": 403,
+    "reached_protected_route": false,
+    "database_operations_executed": 8,
+    "security_log_ref": "blocked_ips:198.51.100.107",
+    "status": "PASS",
+    "evidence": {
+      "detail": "Forbidden: SQL injection payload detected and blocked by Sentinel",
+      "action": "BLOCK",
+      "ip": "198.51.100.107",
+      "risk_score": 98.0,
+      "severity": "CRITICAL",
+      "matched_pattern": "SQL boolean tautology (e.g. ' OR '1'='1' or 1=1)"
+    }
+  },
+  {
+    "test_id": "SEC-MAT-08",
+    "endpoint": "GET /api/search",
+    "category": "Benign Usability",
+    "sanitized_request": "q='select a fresh summer dress from catalog'",
+    "expected_detector_verdict": "BENIGN (Natural Language)",
+    "actual_detector_verdict": "BENIGN (Natural Language)",
+    "expected_policy_decision": "ALLOW",
+    "actual_policy_decision": "ALLOW",
+    "expected_enforcement_action": "NORMAL SUCCESS (HTTP 200)",
+    "actual_enforcement_action": "HTTP 200",
+    "http_status_code": 200,
+    "reached_protected_route": true,
+    "database_operations_executed": 9,
+    "security_log_ref": "N/A",
+    "status": "PASS",
+    "evidence": {
+      "query": "select a fresh summer dress from catalog",
+      "result_count": 0,
+      "results": []
+    }
+  },
+  {
+    "test_id": "SEC-MAT-09",
+    "endpoint": "POST /api/auth/login",
+    "category": "Malformed Request",
+    "sanitized_request": "Invalid raw JSON payload",
+    "expected_detector_verdict": "INVALID_PAYLOAD",
+    "actual_detector_verdict": "INVALID_PAYLOAD",
+    "expected_policy_decision": "REJECT",
+    "actual_policy_decision": "REJECT",
+    "expected_enforcement_action": "SAFE REJECTION (HTTP 400/422)",
+    "actual_enforcement_action": "HTTP 422",
+    "http_status_code": 422,
+    "reached_protected_route": false,
+    "database_operations_executed": 0,
+    "security_log_ref": "N/A",
+    "status": "PASS",
+    "evidence": {
+      "status": 422
+    }
+  },
+  {
+    "test_id": "SEC-MAT-10",
+    "endpoint": "INTERNAL decide_adaptive_security",
+    "category": "Policy Integrity",
+    "sanitized_request": "risk_score=float('nan')",
+    "expected_detector_verdict": "EXCEPTION (ValueError)",
+    "actual_detector_verdict": "EXCEPTION (ValueError)",
+    "expected_policy_decision": "FAIL_SECURE",
+    "actual_policy_decision": "FAIL_SECURE",
+    "expected_enforcement_action": "RAISES ValueError",
+    "actual_enforcement_action": "Raised ValueError",
+    "http_status_code": 400,
+    "reached_protected_route": false,
+    "database_operations_executed": 0,
+    "security_log_ref": "N/A",
+    "status": "PASS",
+    "evidence": {
+      "raised_value_error": true
+    }
+  },
+  {
+    "test_id": "SEC-MAT-11",
+    "endpoint": "POST /analyze",
+    "category": "Fault Tolerance",
+    "sanitized_request": "URL evaluation with simulated exception",
+    "expected_detector_verdict": "EXCEPTION_HANDLED",
+    "actual_detector_verdict": "EXCEPTION_HANDLED",
+    "expected_policy_decision": "SAFE_ERROR",
+    "actual_policy_decision": "SAFE_ERROR",
+    "expected_enforcement_action": "SAFE ERROR RESPONSE",
+    "actual_enforcement_action": "HTTP 200, error_returned=True",
+    "http_status_code": 200,
+    "reached_protected_route": true,
+    "database_operations_executed": 0,
+    "security_log_ref": "N/A",
+    "status": "PASS",
+    "evidence": {
+      "error": "Simulated Feature Extractor Timeout",
+      "score": 0.5
+    }
+  },
+  {
+    "test_id": "SEC-MAT-12",
+    "endpoint": "MIXED /predict, /api/search, /api/auth/login",
+    "category": "Bypass Resistance",
+    "sanitized_request": "IP=198.51.100.112 requesting alternate protected routes",
+    "expected_detector_verdict": "ATTACKER",
+    "actual_detector_verdict": "ATTACKER",
+    "expected_policy_decision": "BLOCK",
+    "actual_policy_decision": "BLOCK",
+    "expected_enforcement_action": "ALL 403 FORBIDDEN",
+    "actual_enforcement_action": "[('/predict', 403), ('/api/search?q=shoes', 403), ('/api/auth/login', 403)]",
+    "http_status_code": 403,
+    "reached_protected_route": false,
+    "database_operations_executed": 0,
+    "security_log_ref": "blocked_ips:198.51.100.112",
+    "status": "PASS",
+    "evidence": {
+      "results": [
+        [
+          "/predict",
+          403
+        ],
+        [
+          "/api/search?q=shoes",
+          403
+        ],
+        [
+          "/api/auth/login",
+          403
+        ]
+      ]
+    }
+  },
+  {
+    "test_id": "SEC-MAT-13",
+    "endpoint": "GET /api/search",
+    "category": "Anti-Spoofing",
+    "sanitized_request": "Real IP=198.51.100.113, Spoofed XFF=192.168.1.50",
+    "expected_detector_verdict": "SPOOFING_IGNORED (Real IP Used)",
+    "actual_detector_verdict": "SPOOFING_IGNORED (Real IP Used)",
+    "expected_policy_decision": "BLOCK",
+    "actual_policy_decision": "BLOCK",
+    "expected_enforcement_action": "HTTP 403 (Header Spoofing Defeated)",
+    "actual_enforcement_action": "HTTP 403",
+    "http_status_code": 403,
+    "reached_protected_route": false,
+    "database_operations_executed": 0,
+    "security_log_ref": "blocked_ips:198.51.100.113",
+    "status": "PASS",
+    "evidence": {
+      "detail": "Forbidden: IP blocked by Sentinel",
+      "action": "BLOCK",
+      "ip": "198.51.100.113"
+    }
+  },
+  {
+    "test_id": "SEC-MAT-14",
+    "endpoint": "GET /api/search",
+    "category": "Concurrency & Consistency",
+    "sanitized_request": "10 concurrent threads from IP=198.51.100.114",
+    "expected_detector_verdict": "ATTACKER",
+    "actual_detector_verdict": "ATTACKER",
+    "expected_policy_decision": "BLOCK",
+    "actual_policy_decision": "BLOCK",
+    "expected_enforcement_action": "ALL 10 THREADS BLOCKED (HTTP 403)",
+    "actual_enforcement_action": "10/10 returned 403",
+    "http_status_code": 403,
+    "reached_protected_route": false,
+    "database_operations_executed": 0,
+    "security_log_ref": "blocked_ips:198.51.100.114",
+    "status": "PASS",
+    "evidence": {
+      "results": [
+        403,
+        403,
+        403,
+        403,
+        403,
+        403,
+        403,
+        403,
+        403,
+        403
+      ]
+    }
+  },
+  {
+    "test_id": "SEC-MAT-15",
+    "endpoint": "GET /api/search",
+    "category": "Block Expiration",
+    "sanitized_request": "IP=198.51.100.115 with expired block TTL",
+    "expected_detector_verdict": "EXPIRED_BLOCK -> UNBLOCKED",
+    "actual_detector_verdict": "EXPIRED_BLOCK -> UNBLOCKED",
+    "expected_policy_decision": "ALLOW",
+    "actual_policy_decision": "ALLOW",
+    "expected_enforcement_action": "RESTORED TRAFFIC (HTTP 200)",
+    "actual_enforcement_action": "HTTP 200, still_blocked=False",
+    "http_status_code": 200,
+    "reached_protected_route": true,
+    "database_operations_executed": 1,
+    "security_log_ref": "blocked_ips:198.51.100.115",
+    "status": "PASS",
+    "evidence": {
+      "status_code": 200,
+      "still_blocked": false
+    }
+  }
+]

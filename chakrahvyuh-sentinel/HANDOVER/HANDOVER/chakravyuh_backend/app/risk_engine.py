@@ -110,6 +110,7 @@ def calculate_risk(
     request_rate_score: float = 0.0,
     auth_failure_score: float = 0.0,
     endpoint_risk_score: float = 0.0,
+    sqli_score: float = 0.0,
 ) -> dict:
     """
     Calculate final security risk.
@@ -119,6 +120,8 @@ def calculate_risk(
         Request rate        15%
         Auth failures       10%
         Endpoint risk       10%
+    If an active SQL injection exploit is confirmed (sqli_score > 0),
+    the composite risk score is elevated to ensure immediate critical policy intervention.
     Explicitly validates finite numbers and bounds output within [0.0, 100.0].
     """
     url_attack_probability = clamp(url_attack_probability, 0.0, 1.0, name="url_attack_probability")
@@ -126,6 +129,7 @@ def calculate_risk(
     request_rate_score = clamp(request_rate_score, 0.0, 1.0, name="request_rate_score")
     auth_failure_score = clamp(auth_failure_score, 0.0, 1.0, name="auth_failure_score")
     endpoint_risk_score = clamp(endpoint_risk_score, 0.0, 1.0, name="endpoint_risk_score")
+    sqli_score = clamp(sqli_score, 0.0, 1.0, name="sqli_score")
 
     weighted_score = (
         0.25 * url_attack_probability
@@ -135,18 +139,27 @@ def calculate_risk(
         + 0.10 * endpoint_risk_score
     )
 
-    risk_score = round(weighted_score * 100, 2)
+    base_risk_score = round(weighted_score * 100, 2)
+    # If confirmed SQL injection probe is detected, elevate risk score to reflect critical severity
+    if sqli_score > 0.0:
+        risk_score = max(base_risk_score, round(sqli_score * 100, 2))
+    else:
+        risk_score = base_risk_score
 
     severity = calculate_severity(risk_score)
+
+    components = {
+        "url": round(url_attack_probability * 100, 2),
+        "behavior": round(behavior_attack_probability * 100, 2),
+        "request_rate": round(request_rate_score * 100, 2),
+        "auth_failure": round(auth_failure_score * 100, 2),
+        "endpoint": round(endpoint_risk_score * 100, 2),
+    }
+    if sqli_score > 0.0:
+        components["sqli"] = round(sqli_score * 100, 2)
 
     return {
         "risk_score": risk_score,
         "severity": severity,
-        "components": {
-            "url": round(url_attack_probability * 100, 2),
-            "behavior": round(behavior_attack_probability * 100, 2),
-            "request_rate": round(request_rate_score * 100, 2),
-            "auth_failure": round(auth_failure_score * 100, 2),
-            "endpoint": round(endpoint_risk_score * 100, 2),
-        },
+        "components": components,
     }

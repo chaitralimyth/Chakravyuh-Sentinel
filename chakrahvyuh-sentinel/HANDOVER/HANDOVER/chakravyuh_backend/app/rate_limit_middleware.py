@@ -22,6 +22,7 @@ from app.config import (
 )
 from app.database import SessionLocal
 from app.db_models import RateLimitEvent
+from app.ip_service import get_client_ip
 
 
 class RateLimiter:
@@ -215,13 +216,17 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             print(f"Failed to log rate limit violation: {e}")
     
     async def dispatch(self, request: Request, call_next):
+        # Always allow CORS preflight requests
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         path = request.url.path
         
         # Skip rate limiting for exempt paths
-        if path in RATE_LIMIT_EXEMPT_PATHS or path.startswith(("/docs", "/redoc", "/openapi")):
+        if path in RATE_LIMIT_EXEMPT_PATHS or path.startswith(("/docs", "/redoc", "/openapi", "/api/check-ip")):
             return await call_next(request)
         
-        client_ip = request.client.host if request.client else "unknown"
+        client_ip = get_client_ip(request)
         
         # Skip rate limiting for localhost during development
         if client_ip in ["127.0.0.1", "localhost", "::1"]:

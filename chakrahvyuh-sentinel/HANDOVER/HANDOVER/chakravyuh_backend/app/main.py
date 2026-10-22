@@ -1,8 +1,8 @@
 import logging
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, List, Union
 
-from fastapi import FastAPI, Request, Depends, HTTPException
+from fastapi import FastAPI, Request, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from sqlalchemy import func
@@ -17,11 +17,13 @@ from app.utils import track_ip
 # Security / behavior / incident pipeline
 from app.database import init_db, get_db
 from app.security_middleware import IPBlockMiddleware
-from app.blocking_service import is_ip_blocked
+from app.blocking_service import is_ip_blocked, block_ip
+from app.ip_service import get_client_ip
+from app.sqli_detector import detect_sqli
 from app.request_logging_middleware import RequestLoggingMiddleware
 from app.rate_limit_middleware import RateLimitMiddleware, _rate_limiter
 from app.dashboard_routes import router as dashboard_router
-from app.config import ALLOWED_ORIGINS, SESSION_EVAL_THRESHOLD
+from app.config import ALLOWED_ORIGINS, CORS_ORIGINS, SESSION_EVAL_THRESHOLD
 from app.db_models import RequestLog, SessionRecord, SecurityAlert, BlockedIP, SecurityIncident, RateLimitEvent
 from app.session_builder import get_or_create_session, touch_session
 from app.security_pipeline import evaluate_session_security
@@ -36,13 +38,26 @@ logger = logging.getLogger(__name__)
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(IPBlockMiddleware)
 app.add_middleware(RateLimitMiddleware)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
+# Enable CORS for all external websites, supporting credentials and all HTTP methods/headers
+if CORS_ORIGINS == "*" or "*" in ALLOWED_ORIGINS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=".*",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=ALLOWED_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
 
 # Dashboard read-only routes
 app.include_router(dashboard_router)
@@ -68,13 +83,14 @@ class TrafficIngestRequest(BaseModel):
     source_site: str = Field(default="x-beauty", min_length=1, max_length=100)
     method: str = Field(..., description="HTTP method (GET, POST, etc.)")
     endpoint: str = Field(..., description="URL path")
-    status_code: int = Field(..., description="HTTP response status code")
+    status_code: int = Field(default=200, description="HTTP response status code")
     timestamp: datetime = Field(..., description="ISO-8601 timestamp")
     request_size: int = Field(default=0, description="Request size in bytes")
     response_size: int = Field(default=0, description="Response size in bytes")
     response_time_ms: float = Field(default=0.0, description="Response time in milliseconds")
     query_length: int = Field(default=0, description="Query string length")
     query_data: str = Field(default="", description="Query string data")
+    website: Optional[str] = Field(default=None, description="Source website domain/identifier")
 
 
 @app.get("/")
@@ -108,15 +124,30 @@ def analyze_url(payload: URLPayload, request: Request):
 
         action, reasons = decide(final_score, url)
 
+        client_ip = get_client_ip(request)
+        request_count = track_ip(client_ip)
+
         if action == "BLOCK":
             risk = "HIGH RISK"
+            db = SessionLocal()
+            try:
+                block_ip(
+                    db=db,
+                    ip=client_ip,
+                    reason=reasons[0] if reasons else "High-risk URL threat blocked by Sentinel",
+                    prediction="attacker",
+                    confidence=float(final_score),
+                    risk_score=95.0,
+                    severity="CRITICAL",
+                )
+            except Exception as e:
+                pass
+            finally:
+                db.close()
         elif action == "ALERT":
             risk = "MEDIUM RISK"
         else:
             risk = confidence_label(final_score)
-
-        client_ip = request.client.host
-        request_count = track_ip(client_ip)
 
         if request_count > 10:
             reasons.append("Too many requests from same user")
@@ -159,93 +190,167 @@ def predict_url_endpoint(payload: URLPayload):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+def _process_traffic_item(db: Session, payload: TrafficIngestRequest) -> dict:
+    """Helper to process a single traffic item into the Sentinel pipeline."""
+    source_site = (payload.source_site or "x-beauty").strip().lower()
+    if not source_site:
+        raise HTTPException(status_code=422, detail="source_site must not be blank")
+
+    # Parse timestamp safely
+    if isinstance(payload.timestamp, datetime):
+        request_timestamp = payload.timestamp
+    elif payload.timestamp:
+        try:
+            request_timestamp = datetime.fromisoformat(str(payload.timestamp).replace('Z', '+00:00'))
+        except Exception:
+            request_timestamp = datetime.now(timezone.utc)
+    else:
+        request_timestamp = datetime.now(timezone.utc)
+
+    if request_timestamp.tzinfo is None:
+        request_timestamp = request_timestamp.replace(tzinfo=timezone.utc)
+
+    # Format query data, annotating source website if specified
+    query_str = payload.query_data or ""
+    if payload.website and "site:" not in query_str:
+        prefix = f"[site:{payload.website}] "
+        query_str = f"{prefix}{query_str}".strip()
+
+    # Get or create session for this IP and source_site
+    session = get_or_create_session(db, payload.ip, source_site=source_site)
+
+    # Create request log entry
+    log = RequestLog(
+        session_id=session.session_id,
+        timestamp=request_timestamp,
+        ip=payload.ip,
+        source_site=source_site,
+        method=payload.method,
+        endpoint=payload.endpoint,
+        status_code=payload.status_code,
+        request_size=payload.request_size,
+        response_size=payload.response_size,
+        response_time_ms=payload.response_time_ms,
+        query_length=payload.query_length or len(query_str),
+        query_data=query_str[:2000],
+    )
+    db.add(log)
+    db.commit()
+
+    # Update session
+    session = touch_session(db, session)
+
+    # Check if client IP is currently blocked
+    is_blocked = is_ip_blocked(db, payload.ip)
+    action = "BLOCK" if is_blocked else "ALLOW"
+    risk_score = None
+    severity = None
+
+    # Immediate SQL injection detection (do not wait for session threshold)
+    sqli_res = detect_sqli(payload.query_data)
+    if not sqli_res["is_sqli"]:
+        sqli_res = detect_sqli(payload.endpoint)
+
+    if sqli_res["is_sqli"]:
+        action = "BLOCK"
+        is_blocked = True
+        risk_score = sqli_res["risk_score"]
+        severity = "CRITICAL"
+        reason = f"SQL injection attack payload detected: {sqli_res['matched_patterns'][0]}"
+        block_ip(
+            db=db,
+            ip=payload.ip,
+            reason=reason[:255],
+            prediction="attacker",
+            confidence=sqli_res["confidence"],
+            session_id=session.session_id,
+            risk_score=risk_score,
+            severity=severity,
+        )
+
+    # Check rate limiter for this external IP
+    rate_info = {}
+    if not is_blocked:
+        rate_allowed, rate_info = _rate_limiter.is_allowed(payload.ip)
+        if not rate_allowed:
+            action = "RATE_LIMIT"
+
+    # Unified session evaluation if threshold reached
+    if not is_blocked and session.request_count > 0 and session.request_count % SESSION_EVAL_THRESHOLD == 0:
+        eval_res = evaluate_session_security(
+            db=db,
+            session=session,
+            client_ip=payload.ip,
+            current_url=payload.endpoint,
+        )
+        if eval_res and eval_res.get("evaluated"):
+            eval_action = eval_res.get("action")
+            risk_score = eval_res.get("risk_score")
+            severity = eval_res.get("severity")
+            is_blocked = is_ip_blocked(db, payload.ip)
+            if eval_action == "BLOCK" or is_blocked:
+                action = "BLOCK"
+            elif not is_blocked and rate_info and not rate_allowed:
+                action = "RATE_LIMIT"
+            elif eval_action:
+                action = eval_action
+
+    return {
+        "success": True,
+        "message": "Traffic ingested successfully",
+        "session_id": session.session_id,
+        "request_count": session.request_count,
+        "action": action,
+        "blocked": is_blocked,
+        "risk_score": risk_score,
+        "severity": severity,
+        "rate_limit_info": rate_info,
+    }
+
+
+@app.post("/api/logs")
 @app.post("/api/ingest-traffic")
 def ingest_traffic(payload: TrafficIngestRequest, db: Session = Depends(get_db)):
     """
     Ingest protected-site traffic into the unified Sentinel pipeline.
     Processing: RequestLog → Session Builder → Behavior ML + URL ML → Dynamic Risk Engine → Adaptive Agent
     """
-    source_site = payload.source_site.strip().lower()
-    if not source_site:
-        raise HTTPException(status_code=422, detail="source_site must not be blank")
-
+    source_site = (payload.source_site or "x-beauty").strip().lower()
     try:
-        request_timestamp = payload.timestamp
-        if request_timestamp.tzinfo is None:
-            request_timestamp = request_timestamp.replace(tzinfo=timezone.utc)
-
-        session = get_or_create_session(db, payload.ip, source_site=source_site)
-
-        # Create request log entry
-        log = RequestLog(
-            session_id=session.session_id,
-            timestamp=request_timestamp,
-            ip=payload.ip,
-            source_site=source_site,
-            method=payload.method,
-            endpoint=payload.endpoint,
-            status_code=payload.status_code,
-            request_size=payload.request_size,
-            response_size=payload.response_size,
-            response_time_ms=payload.response_time_ms,
-            query_length=payload.query_length,
-            query_data=payload.query_data[:2000],
-        )
-        db.add(log)
-        db.commit()
-
-        # Update session
-        session = touch_session(db, session)
-
-        # Check if client IP is currently blocked
-        is_blocked = is_ip_blocked(db, payload.ip)
-        action = "BLOCK" if is_blocked else "ALLOW"
-        risk_score = None
-        severity = None
-
-        # Check rate limiter for this external IP
-        rate_info = {}
-        if not is_blocked:
-            rate_allowed, rate_info = _rate_limiter.is_allowed(payload.ip)
-            if not rate_allowed:
-                action = "RATE_LIMIT"
-
-        # Unified session evaluation if threshold reached
-        if session.request_count > 0 and session.request_count % SESSION_EVAL_THRESHOLD == 0:
-            eval_res = evaluate_session_security(
-                db=db,
-                session=session,
-                client_ip=payload.ip,
-                current_url=payload.endpoint,
-            )
-            if eval_res and eval_res.get("evaluated"):
-                eval_action = eval_res.get("action")
-                risk_score = eval_res.get("risk_score")
-                severity = eval_res.get("severity")
-                is_blocked = is_ip_blocked(db, payload.ip)
-                if eval_action == "BLOCK" or is_blocked:
-                    action = "BLOCK"
-                elif not is_blocked and rate_info and not rate_allowed:
-                    action = "RATE_LIMIT"
-                elif eval_action:
-                    action = eval_action
-
-        return {
-            "success": True,
-            "message": "Traffic ingested successfully",
-            "session_id": session.session_id,
-            "request_count": session.request_count,
-            "action": action,
-            "blocked": is_blocked,
-            "risk_score": risk_score,
-            "severity": severity,
-            "rate_limit_info": rate_info,
-        }
-
+        return _process_traffic_item(db, payload)
+    except HTTPException:
+        raise
     except Exception as exc:
         db.rollback()
         logger.exception("Traffic ingestion failed for source_site=%s", source_site)
         raise HTTPException(status_code=500, detail="Traffic ingestion failed") from exc
+
+
+@app.post("/api/logs/batch")
+@app.post("/api/ingest-traffic/batch")
+def ingest_traffic_batch(payloads: List[TrafficIngestRequest]):
+    """
+    Ingest batches of external traffic requests from any website or reverse proxy.
+    """
+    db = SessionLocal()
+    results = []
+    try:
+        for p in payloads:
+            res = _process_traffic_item(db, p)
+            results.append(res)
+        return {
+            "success": True,
+            "ingested_count": len(results),
+            "results": results,
+        }
+    except Exception as e:
+        db.rollback()
+        return {
+            "success": False,
+            "message": f"Failed to ingest traffic batch: {str(e)}",
+        }
+    finally:
+        db.close()
 
 
 @app.get("/api/check-ip/{ip}")
@@ -321,6 +426,12 @@ def get_incident_timeline(session_id: str, db: Session = Depends(get_db)):
     Combines data from request_logs, security_alerts, blocked_ips, and sessions.
     Also supports incident_id resolution if an integer is provided.
     """
+    if detect_sqli(session_id)["is_sqli"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid session_id: SQL injection pattern detected",
+        )
+
     actual_session_id = session_id
     if session_id.isdigit():
         inc = db.query(SecurityIncident).filter(SecurityIncident.id == int(session_id)).first()
@@ -592,4 +703,108 @@ def get_ip_rate_limit_stats(ip: str, db: Session = Depends(get_db)):
             }
             for v in violations
         ]
+    }
+
+
+# ============================================================
+# PROTECTED APPLICATION ENDPOINTS (Search, Auth, Numeric)
+# ============================================================
+
+class LoginPayload(BaseModel):
+    username: str = Field(..., description="Username or email")
+    password: str = Field(..., description="User password")
+
+
+@app.post("/api/auth/login")
+@app.post("/api/login")
+def api_login(payload: LoginPayload, request: Request, db: Session = Depends(get_db)):
+    """
+    Protected authentication endpoint with proactive SQL injection defense.
+    Rejects injection payloads and blocks malicious client IPs before database execution.
+    """
+    client_ip = get_client_ip(request)
+
+    for field_name, field_val in [("username", payload.username), ("password", payload.password)]:
+        sqli = detect_sqli(field_val)
+        if sqli["is_sqli"]:
+            block_ip(
+                db=db,
+                ip=client_ip,
+                reason=f"SQL injection attack payload in {field_name}: {sqli['matched_patterns'][0]}",
+                prediction="attacker",
+                confidence=sqli["confidence"],
+                risk_score=sqli["risk_score"],
+                severity="CRITICAL",
+            )
+            raise HTTPException(
+                status_code=403,
+                detail=f"Forbidden: SQL injection payload detected in {field_name}",
+            )
+
+    # Safe parameterized query: check if username exists in sessions
+    # Parameterization guarantees unsafe SQL can never alter query structure
+    session_row = db.query(SessionRecord).filter(SessionRecord.session_id == payload.username).first()
+
+    return {
+        "status": "success",
+        "authenticated": False,
+        "message": "Invalid credentials",
+        "ip": client_ip,
+    }
+
+
+@app.get("/api/search")
+def api_search(q: str = Query(..., min_length=1, max_length=500), request: Request = None, db: Session = Depends(get_db)):
+    """
+    Protected search endpoint.
+    Differentiates benign queries from SQL injection attacks.
+    Executes safely with strict parameterization.
+    """
+    client_ip = get_client_ip(request) if request else "unknown"
+
+    sqli = detect_sqli(q)
+    if sqli["is_sqli"]:
+        block_ip(
+            db=db,
+            ip=client_ip,
+            reason=f"SQL injection attack in search parameter: {sqli['matched_patterns'][0]}",
+            prediction="attacker",
+            confidence=sqli["confidence"],
+            risk_score=sqli["risk_score"],
+            severity="CRITICAL",
+        )
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: SQL injection payload detected in search query",
+        )
+
+    # Safe parameterized query via SQLAlchemy ORM
+    matches = (
+        db.query(RequestLog)
+        .filter(RequestLog.endpoint.contains(q))
+        .limit(10)
+        .all()
+    )
+
+    return {
+        "query": q,
+        "result_count": len(matches),
+        "results": [{"id": m.id, "endpoint": m.endpoint} for m in matches],
+    }
+
+
+@app.get("/api/items/{item_id}")
+def api_get_item(item_id: int, db: Session = Depends(get_db)):
+    """
+    Protected numeric identifier lookup.
+    Enforces strict numeric type validation and parameterization.
+    """
+    item = db.query(RequestLog).filter(RequestLog.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    return {
+        "id": item.id,
+        "endpoint": item.endpoint,
+        "status_code": item.status_code,
     }
