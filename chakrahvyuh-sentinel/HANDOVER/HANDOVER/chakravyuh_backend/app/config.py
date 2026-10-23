@@ -124,14 +124,20 @@ RISK_BLOCK_MIN = _get_int('RISK_BLOCK_MIN', 80)
 # Rate Limiting Configuration
 # ---------------------------------------------------------
 
-# Rate limiting: maximum requests per time window per IP
+# Rate limiting: maximum requests per time window per IP for normal traffic
 RATE_LIMIT_REQUESTS = _get_int('RATE_LIMIT_REQUESTS', 100)
+
+# Rate limiting for moderate-risk clients (score 59-79): strict request quota
+RATE_LIMIT_MODERATE_REQUESTS = _get_int('RATE_LIMIT_MODERATE_REQUESTS', 5)
 
 # Time window in seconds for rate limiting
 RATE_LIMIT_WINDOW_SECONDS = _get_int('RATE_LIMIT_WINDOW_SECONDS', 60)
 
-# Rate limiting: burst capacity (allows short bursts above normal rate)
+# Rate limiting: burst capacity (allows short bursts above normal rate for low-risk traffic)
 RATE_LIMIT_BURST = _get_int('RATE_LIMIT_BURST', 20)
+
+# Proxy configuration
+TRUST_PROXY_HEADERS = os.getenv("TRUST_PROXY_HEADERS", "true").lower() in ("true", "1", "yes")
 
 # Paths exempt from rate limiting (health checks, docs, external website ingestion, etc.)
 RATE_LIMIT_EXEMPT_PATHS = {

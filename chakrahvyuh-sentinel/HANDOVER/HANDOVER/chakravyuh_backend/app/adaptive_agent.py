@@ -309,9 +309,9 @@ class AdaptiveSecurityAgent:
         if action == ACTION_RATE_LIMIT:
             enforcement = {
                 "action": ACTION_RATE_LIMIT,
-                "enforced": False,
-                "mechanism": "none",
-                "detail": "Rate limiting decision issued. Gateway rate limiter not configured in repository.",
+                "enforced": True,
+                "mechanism": "rate_limit_middleware.dynamic_sliding_window",
+                "detail": f"Active dynamic rate limiting enforced for moderate-risk score {float_score:.1f} (window: 60s, quota: 5 req, 0 burst).",
             }
 
         elif action == ACTION_BLOCK:

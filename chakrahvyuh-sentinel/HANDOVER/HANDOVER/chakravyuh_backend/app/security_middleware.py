@@ -50,11 +50,24 @@ class IPBlockMiddleware(BaseHTTPMiddleware):
         # -------------------------------------------------------------
         # 1. Pre-Route SQL Injection Attack Interception
         # -------------------------------------------------------------
-        # Inspect query string and path for SQL injection attacks
+        # Inspect query string, path, and JSON body for SQL injection attacks
         query_str = request.url.query or ""
         sqli_check = detect_sqli(query_str)
         if not sqli_check["is_sqli"] and path:
             sqli_check = detect_sqli(path)
+
+        if not sqli_check["is_sqli"] and request.method in ("POST", "PUT", "PATCH"):
+            content_type = request.headers.get("content-type", "")
+            if "application/json" in content_type:
+                try:
+                    body_bytes = await request.body()
+                    if body_bytes:
+                        import json
+                        from app.sqli_detector import inspect_payload_for_sqli
+                        body_data = json.loads(body_bytes.decode("utf-8", errors="ignore"))
+                        sqli_check = inspect_payload_for_sqli(body_data)
+                except Exception:
+                    pass
 
         if sqli_check["is_sqli"]:
             # Commit active block for client_ip immediately
@@ -96,13 +109,7 @@ class IPBlockMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # -------------------------------------------------------------
-        # 3. Localhost Safeguard (if explicitly enabled)
-        # -------------------------------------------------------------
-        if ALLOW_LOCALHOST_BYPASS and client_ip in ["127.0.0.1", "localhost", "::1"]:
-            return await call_next(request)
-
-        # -------------------------------------------------------------
-        # 4. Active IP Blocklist Pre-Route Drop
+        # 3. Active IP Blocklist Pre-Route Drop
         # -------------------------------------------------------------
         db = SessionLocal()
         try:
@@ -124,5 +131,11 @@ class IPBlockMiddleware(BaseHTTPMiddleware):
             )
         finally:
             db.close()
+
+        # -------------------------------------------------------------
+        # 4. Localhost Safeguard (for unblocked dev traffic)
+        # -------------------------------------------------------------
+        if ALLOW_LOCALHOST_BYPASS and client_ip in ["127.0.0.1", "localhost", "::1"]:
+            return await call_next(request)
 
         return await call_next(request)

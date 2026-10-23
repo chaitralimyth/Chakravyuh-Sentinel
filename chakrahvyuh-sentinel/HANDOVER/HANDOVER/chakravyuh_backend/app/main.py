@@ -268,10 +268,11 @@ def _process_traffic_item(db: Session, payload: TrafficIngestRequest) -> dict:
             severity=severity,
         )
 
-    # Check rate limiter for this external IP
+    # Check rate limiter for this external IP (moderate-risk or standard)
     rate_info = {}
     if not is_blocked:
-        rate_allowed, rate_info = _rate_limiter.is_allowed(payload.ip)
+        is_mod = _rate_limiter.is_moderate_risk(payload.ip)
+        rate_allowed, rate_info = _rate_limiter.is_allowed(payload.ip, is_moderate_risk=is_mod)
         if not rate_allowed:
             action = "RATE_LIMIT"
 
@@ -360,13 +361,38 @@ def check_ip_status(ip: str, db: Session = Depends(get_db)):
     Allows external applications like X Beauty to pre-check enforcement status.
     """
     blocked = is_ip_blocked(db, ip)
-    rate_allowed, rate_info = _rate_limiter.check_allowed(ip) if not blocked else (True, {})
-    action = "BLOCK" if blocked else ("RATE_LIMIT" if not rate_allowed else "ALLOW")
+    if blocked:
+        return {
+            "ip": ip,
+            "blocked": True,
+            "rate_limited": False,
+            "action": "BLOCK",
+            "risk_score": 95.0,
+            "rate_limit_info": {},
+        }
+
+    # Query active moderate risk from rate limiter or DB
+    cached_risk = _rate_limiter.get_ip_risk(ip)
+    if cached_risk is None:
+        latest_alert = (
+            db.query(SecurityAlert)
+            .filter(SecurityAlert.ip == ip)
+            .order_by(SecurityAlert.created_at.desc())
+            .first()
+        )
+        if latest_alert and latest_alert.risk_score:
+            cached_risk = latest_alert.risk_score
+            _rate_limiter.set_ip_risk(ip, cached_risk)
+
+    is_moderate = cached_risk is not None and (59.0 < cached_risk <= 79.0)
+    rate_allowed, rate_info = _rate_limiter.check_allowed(ip, is_moderate_risk=is_moderate)
+    action = "RATE_LIMIT" if not rate_allowed else ("MONITOR" if is_moderate else "ALLOW")
     return {
         "ip": ip,
-        "blocked": blocked,
+        "blocked": False,
         "rate_limited": not rate_allowed,
         "action": action,
+        "risk_score": cached_risk if cached_risk is not None else 0.0,
         "rate_limit_info": rate_info,
     }
 

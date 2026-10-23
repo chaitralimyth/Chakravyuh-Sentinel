@@ -1,4 +1,4 @@
-﻿"""
+"""
 Comprehensive Unit Tests for Adaptive Security Agent.
 
 Tests:
@@ -65,9 +65,9 @@ class TestAdaptiveSecurityAgent(unittest.TestCase):
         decision = self.agent.decide(risk_score=70.0)
         self.assertEqual(decision["action"], ACTION_RATE_LIMIT)
         self.assertEqual(decision["severity"], SEVERITY_HIGH)
-        # Verify rate-limit enforcement is NOT faked
-        self.assertFalse(decision["enforcement"]["enforced"])
-        self.assertEqual(decision["enforcement"]["mechanism"], "none")
+        # Verify rate-limit enforcement is active
+        self.assertTrue(decision["enforcement"]["enforced"])
+        self.assertEqual(decision["enforcement"]["mechanism"], "rate_limit_middleware.dynamic_sliding_window")
 
     def test_critical_risk_maps_to_block(self):
         decision = self.agent.decide(risk_score=91.0)
@@ -256,9 +256,9 @@ class TestAdaptiveSecurityAgent(unittest.TestCase):
         d = self.agent.decide(risk_score=68)
         self.assertEqual(d["action"], ACTION_RATE_LIMIT)
         enf = d["enforcement"]
-        self.assertFalse(enf["enforced"])
-        self.assertEqual(enf["mechanism"], "none")
-        self.assertIn("Gateway rate limiter not configured", enf["detail"])
+        self.assertTrue(enf["enforced"])
+        self.assertEqual(enf["mechanism"], "rate_limit_middleware.dynamic_sliding_window")
+        self.assertIn("Active dynamic rate limiting enforced", enf["detail"])
 
     # ---------------------------------------------------------
     # 8. BLOCK Integration with blocking_service

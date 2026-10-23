@@ -24,6 +24,10 @@ def is_ip_blocked(db: DBSession, ip: str) -> bool:
     still_blocked = False
     for block in active_blocks:
         blocked_until = block.blocked_until
+        if blocked_until is None:
+            still_blocked = True
+            continue
+
         if blocked_until.tzinfo is None:
             blocked_until = blocked_until.replace(tzinfo=timezone.utc)
 

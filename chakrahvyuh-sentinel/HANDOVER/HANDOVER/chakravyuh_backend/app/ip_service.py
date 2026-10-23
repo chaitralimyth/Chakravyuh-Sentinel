@@ -77,13 +77,21 @@ def is_ip_in_network(ip_str: str, net_or_ip: str) -> bool:
 
 
 def is_peer_trusted(peer_ip: str) -> bool:
-    """Return True if peer_ip is in configured TRUSTED_PROXIES or test client harness."""
+    """Return True if peer_ip is in configured TRUSTED_PROXIES, test client harness, or local proxy network."""
     if peer_ip in ("testclient", "testserver"):
         return True
     trusted = get_trusted_proxies()
-    if not trusted:
-        return False
-    return any(is_ip_in_network(peer_ip, t) for t in trusted)
+    if trusted:
+        return any(is_ip_in_network(peer_ip, t) for t in trusted)
+
+    # When TRUST_PROXY_HEADERS is enabled (default for deployments behind Render/Vercel/reverse proxies),
+    # trust standard internal private network hops and loopback
+    from app.config import TRUST_PROXY_HEADERS
+    if TRUST_PROXY_HEADERS:
+        default_internal = {"127.0.0.1", "::1", "localhost", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"}
+        return any(is_ip_in_network(peer_ip, t) for t in default_internal)
+
+    return False
 
 
 def get_client_ip(request: Request) -> str:

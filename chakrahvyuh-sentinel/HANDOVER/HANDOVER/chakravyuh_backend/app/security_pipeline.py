@@ -178,7 +178,12 @@ def evaluate_session_security(
             severity=severity,
         )
 
-    # For ALLOW: no alert or block is created.
+    # Sync dynamic risk score with rate limiter for immediate moderate-risk enforcement
+    try:
+        from app.rate_limit_middleware import _rate_limiter
+        _rate_limiter.set_ip_risk(client_ip, risk_score)
+    except Exception:
+        pass
 
     return {
         "evaluated": True,

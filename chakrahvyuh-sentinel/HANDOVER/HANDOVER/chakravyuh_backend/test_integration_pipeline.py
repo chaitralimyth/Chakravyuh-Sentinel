@@ -147,9 +147,9 @@ class TestAdaptiveAgentThresholdBoundaries(unittest.TestCase):
         dec = decide_adaptive_security(risk_score=60.0)
         self.assertEqual(dec["action"], ACTION_RATE_LIMIT)
         self.assertEqual(dec["severity"], SEVERITY_HIGH)
-        # Verify honest enforcement reporting
-        self.assertFalse(dec["enforcement"]["enforced"])
-        self.assertEqual(dec["enforcement"]["mechanism"], "none")
+        # Verify active rate limit enforcement
+        self.assertTrue(dec["enforcement"]["enforced"])
+        self.assertEqual(dec["enforcement"]["mechanism"], "rate_limit_middleware.dynamic_sliding_window")
 
     def test_boundary_79_rate_limit(self):
         dec = decide_adaptive_security(risk_score=79.0)

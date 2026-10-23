@@ -140,12 +140,29 @@ def calculate_risk(
     )
 
     base_risk_score = round(weighted_score * 100, 2)
+    risk_score = base_risk_score
+
+    # Multi-vector elevation for behavioral attacks and volumetric bursts:
+    # 1. Behavioral Burst Attack: If the behavior ML model classifies the session as an attacker
+    #    (probability >= 0.8) and request velocity is high (request_rate_score >= 0.5),
+    #    elevate into the CRITICAL BLOCK tier (>= 80.0, e.g. 85-99).
+    # 2. Moderate Risk / Rate-Limit Tier: If request rate is elevated (request_rate_score >= 0.7)
+    #    or behavior is suspicious (probability >= 0.6 and rate >= 0.3),
+    #    elevate into the HIGH RATE_LIMIT tier (60.0 to 79.0).
+    # 3. SQLi threat elevation: If confirmed SQL injection probe is detected, elevate to critical severity.
+    if behavior_attack_probability >= 0.8 and request_rate_score >= 0.5:
+        elevated = round(max(85.0, (0.5 * behavior_attack_probability + 0.5 * request_rate_score) * 100), 2)
+        risk_score = max(risk_score, min(100.0, elevated))
+    elif request_rate_score >= 0.7 or (behavior_attack_probability >= 0.6 and request_rate_score >= 0.3):
+        elevated_rate = round((0.4 * max(behavior_attack_probability, 0.5) + 0.6 * request_rate_score) * 100, 2)
+        bounded_elevated = max(60.0, min(79.0, elevated_rate))
+        risk_score = max(risk_score, bounded_elevated)
+
     # If confirmed SQL injection probe is detected, elevate risk score to reflect critical severity
     if sqli_score > 0.0:
-        risk_score = max(base_risk_score, round(sqli_score * 100, 2))
-    else:
-        risk_score = base_risk_score
+        risk_score = max(risk_score, round(sqli_score * 100, 2))
 
+    risk_score = clamp(risk_score, 0.0, 100.0, name="risk_score")
     severity = calculate_severity(risk_score)
 
     components = {
