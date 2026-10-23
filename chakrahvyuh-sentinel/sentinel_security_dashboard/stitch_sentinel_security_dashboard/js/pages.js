@@ -314,11 +314,12 @@ SentinelPages.dashboard = async function () {
     if (tbody) tbody.innerHTML = skeletonRows(8, 4);
 
     try {
-      const [stats, alerts, analytics, severityStats] = await Promise.all([
+      const [stats, alerts, analytics, severityStats, rateLimitStats] = await Promise.all([
         SentinelAPI.getStats(),
         SentinelAPI.getAlerts({ limit: 8 }),
         SentinelAPI.getStatistics().catch(() => ({})),
         SentinelAPI.getSeverityStats().catch(() => ({})),
+        SentinelAPI.getRateLimitStats().catch(() => ({})),
       ]);
 
       updateEngineStatus(stats.status === "running" || !!stats.total_requests);
@@ -330,6 +331,7 @@ SentinelPages.dashboard = async function () {
       setText("stat-total-alerts", F.number(stats.total_alerts));
       setText("stat-unread-alerts", `${F.number(stats.unread_alerts)} unread`);
       setText("stat-blocked-ips", F.number(stats.active_blocked_ips));
+      setText("stat-rate-limited", F.number(stats.total_rate_limited !== undefined ? stats.total_rate_limited : (rateLimitStats.total_violations || 0)));
 
       // 2. Risk Score & Severity Display (Backend is single source of truth)
       let latestRiskScore = null;
@@ -397,6 +399,28 @@ SentinelPages.dashboard = async function () {
           });
         } else {
           tbody.innerHTML = emptyRow(9, "No security alerts detected. Protected website traffic is safe.", "verified_user");
+        }
+      }
+
+      // 3b. Render Rate Limit Violations Table
+      const rlBody = document.getElementById("recent-ratelimit-body");
+      if (rlBody) {
+        const violations = rateLimitStats.recent_violations || [];
+        if (violations.length > 0) {
+          rlBody.innerHTML = violations.slice(0, 8).map((v) => `
+            <tr class="hover:bg-slate-50/80 transition-colors">
+              <td class="px-5 py-3 whitespace-nowrap text-xs text-slate-500 font-mono">${F.datetime(v.created_at)}</td>
+              <td class="px-5 py-3 whitespace-nowrap font-mono text-xs font-semibold text-slate-800">${v.ip}</td>
+              <td class="px-5 py-3 whitespace-nowrap">${F.methodBadge(v.method)}</td>
+              <td class="px-5 py-3 font-mono text-xs text-slate-700 max-w-[260px] truncate" title="${v.endpoint}">${v.endpoint}</td>
+              <td class="px-5 py-3 whitespace-nowrap text-xs text-slate-600 font-medium">${v.limit || 5} req / ${v.window_seconds || 60}s</td>
+              <td class="px-5 py-3 whitespace-nowrap">${F.actionBadge("RATE_LIMIT")}</td>
+              <td class="px-5 py-3 whitespace-nowrap">${F.statusCodeBadge(429)}</td>
+              <td class="px-5 py-3 text-xs text-slate-600">${v.reason || "Rate limit quota exceeded"}</td>
+            </tr>
+          `).join("");
+        } else {
+          rlBody.innerHTML = emptyRow(8, "No rate limit violations recorded yet. Traffic is within normal limits.", "verified_user");
         }
       }
 
@@ -858,6 +882,7 @@ SentinelPages.requests = async function () {
       if (method && (r.method || "").toUpperCase() !== method) return false;
       if (statusRange) {
         const sc = Number(r.status_code);
+        if (statusRange === "429" && sc !== 429) return false;
         if (statusRange === "2xx" && (sc < 200 || sc >= 300)) return false;
         if (statusRange === "3xx" && (sc < 300 || sc >= 400)) return false;
         if (statusRange === "4xx" && (sc < 400 || sc >= 500)) return false;
@@ -913,7 +938,9 @@ SentinelPages.requests = async function () {
             </div>
             ${r.query_data ? `<div class="text-[11px] font-mono text-amber-700 truncate mt-0.5" title="${r.query_data.replace(/"/g, '&quot;')}">↳ ${r.query_data.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>` : ""}
           </td>
-          <td class="px-5 py-3 whitespace-nowrap">${F.statusCodeBadge(r.status_code)}</td>
+          <td class="px-5 py-3 whitespace-nowrap">
+            ${F.statusCodeBadge(r.status_code)}${Number(r.status_code) === 429 ? ' <span class="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-600 text-white shadow-xs">RATE LIMIT</span>' : ''}
+          </td>
           <td class="px-5 py-3 font-mono text-xs text-slate-600 whitespace-nowrap text-right">${Math.round(r.response_time_ms || 0)}ms</td>
           <td class="px-5 py-3 font-mono text-xs text-slate-500 whitespace-nowrap">${F.sessionIdShort(r.session_id)}</td>
         </tr>`

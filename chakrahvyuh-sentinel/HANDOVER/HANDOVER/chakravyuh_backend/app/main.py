@@ -23,7 +23,7 @@ from app.sqli_detector import detect_sqli
 from app.request_logging_middleware import RequestLoggingMiddleware
 from app.rate_limit_middleware import RateLimitMiddleware, _rate_limiter
 from app.dashboard_routes import router as dashboard_router
-from app.config import ALLOWED_ORIGINS, CORS_ORIGINS, SESSION_EVAL_THRESHOLD
+from app.config import ALLOWED_ORIGINS, CORS_ORIGINS, SESSION_EVAL_THRESHOLD, RATE_LIMIT_REQUESTS, RATE_LIMIT_WINDOW_SECONDS
 from app.db_models import RequestLog, SessionRecord, SecurityAlert, BlockedIP, SecurityIncident, RateLimitEvent
 from app.session_builder import get_or_create_session, touch_session
 from app.security_pipeline import evaluate_session_security
@@ -283,8 +283,27 @@ def _process_traffic_item(db: Session, payload: TrafficIngestRequest) -> dict:
     if not is_blocked:
         is_mod = _rate_limiter.is_moderate_risk(payload.ip)
         rate_allowed, rate_info = _rate_limiter.is_allowed(payload.ip, is_moderate_risk=is_mod)
-        if not rate_allowed:
+        if not rate_allowed or payload.status_code == 429:
             action = "RATE_LIMIT"
+            try:
+                rl_count = rate_info.get("current", 6) if rate_info else 6
+                rl_win = rate_info.get("window", RATE_LIMIT_WINDOW_SECONDS) if rate_info else RATE_LIMIT_WINDOW_SECONDS
+                rl_lim = rate_info.get("limit", RATE_LIMIT_REQUESTS) if rate_info else RATE_LIMIT_REQUESTS
+                rl_burst = rate_info.get("burst_used", False) if rate_info else False
+                violation = RateLimitEvent(
+                    ip=payload.ip,
+                    endpoint=payload.endpoint,
+                    method=payload.method,
+                    request_count=rl_count,
+                    window_seconds=rl_win,
+                    limit=rl_lim,
+                    burst_used=rl_burst,
+                )
+                db.add(violation)
+                db.commit()
+            except Exception as rle_err:
+                logger.error(f"Failed to persist ingested RateLimitEvent: {rle_err}")
+
 
     # Unified session evaluation if threshold reached
     if not is_blocked and session.request_count > 0 and session.request_count % SESSION_EVAL_THRESHOLD == 0:
@@ -693,11 +712,20 @@ def get_action_statistics(db: Session = Depends(get_db)):
 # ============================================================
 
 @app.get("/rate-limit/stats")
-def get_rate_limit_stats(db: Session = Depends(get_db)):
+def get_rate_limit_stats(
+    db: Session = Depends(get_db),
+    source_site: str = "x-beauty"
+):
     """Get rate limiting statistics and recent violations."""
-    # Count total violations
+    source_site = source_site.strip().lower()
     total_violations = db.query(RateLimitEvent).count()
     
+    # Query 429 status code logs from RequestLog
+    rl_query = db.query(RequestLog).filter(RequestLog.status_code == 429)
+    if source_site != "all":
+        rl_query = rl_query.filter(RequestLog.source_site == source_site)
+    total_429_requests = rl_query.count()
+
     # Get recent violations (last 100)
     recent_violations = (
         db.query(RateLimitEvent)
@@ -716,9 +744,13 @@ def get_rate_limit_stats(db: Session = Depends(get_db)):
     )
     
     return {
-        "total_violations": total_violations,
+        "total_violations": max(total_violations, total_429_requests),
+        "total_429_requests": total_429_requests,
+        "limit": RATE_LIMIT_REQUESTS,
+        "window_seconds": RATE_LIMIT_WINDOW_SECONDS,
         "recent_violations": [
             {
+                "id": v.id,
                 "ip": v.ip,
                 "endpoint": v.endpoint,
                 "method": v.method,
@@ -726,6 +758,9 @@ def get_rate_limit_stats(db: Session = Depends(get_db)):
                 "limit": v.limit,
                 "window_seconds": v.window_seconds,
                 "burst_used": v.burst_used,
+                "reason": f"Exceeded {v.limit} requests per {v.window_seconds}s window",
+                "action": "RATE_LIMIT",
+                "status_code": 429,
                 "created_at": v.created_at.isoformat() if v.created_at else None
             }
             for v in recent_violations

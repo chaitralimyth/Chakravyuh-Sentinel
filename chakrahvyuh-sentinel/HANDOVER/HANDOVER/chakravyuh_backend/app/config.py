@@ -158,4 +158,6 @@ RATE_LIMIT_EXEMPT_PATHS = {
     "/api/logs",
     "/api/check-ip",
     "/api/unblock-ip",
+    "/rate-limit/stats",
+    "/rate-limit",
 }

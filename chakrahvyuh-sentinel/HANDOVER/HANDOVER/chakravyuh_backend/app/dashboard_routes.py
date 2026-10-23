@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -167,6 +168,35 @@ def list_blocked_ips(
     ]
 
 
+class BlockIPRequest(BaseModel):
+    ip: str
+    reason: str = "Administrative manual block"
+    severity: str = "HIGH"
+    prediction: str = "attacker"
+    confidence: float = 0.95
+
+
+@router.post("/blocked-ips")
+def manual_block_ip(payload: BlockIPRequest, db: Session = Depends(get_db)):
+    """Manually block an IP address."""
+    from app.blocking_service import block_ip
+    block = block_ip(
+        db=db,
+        ip=payload.ip,
+        reason=payload.reason,
+        prediction=payload.prediction,
+        confidence=payload.confidence,
+        severity=payload.severity,
+    )
+    return {
+        "status": "ok",
+        "message": f"IP {payload.ip} blocked successfully",
+        "id": block.id,
+        "ip": block.ip,
+        "is_active": block.is_active,
+    }
+
+
 @router.get("/blocked-ips/{block_id}/evidence")
 def get_blocked_ip_evidence(block_id: int, db: Session = Depends(get_db)):
     """Fetch linked triggering request and evidence for a specific blocked IP."""
@@ -307,6 +337,10 @@ def get_stats(
     )
     requests_24h_query = request_query.filter(RequestLog.timestamp >= since_24h)
     requests_24h = requests_24h_query.count()
+    rate_limit_query = db.query(RequestLog).filter(RequestLog.status_code == 429)
+    if source_site != "all":
+        rate_limit_query = rate_limit_query.filter(RequestLog.source_site == source_site)
+    total_rate_limited = rate_limit_query.count()
 
     return {
         "status": "running",
@@ -316,6 +350,7 @@ def get_stats(
         "unread_alerts": unread_alerts,
         "active_blocked_ips": active_blocked_ips,
         "requests_24h": requests_24h,
+        "total_rate_limited": total_rate_limited,
     }
 
 

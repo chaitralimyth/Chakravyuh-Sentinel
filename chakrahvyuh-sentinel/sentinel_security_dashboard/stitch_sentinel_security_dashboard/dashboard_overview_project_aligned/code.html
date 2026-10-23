@@ -166,7 +166,7 @@
       </div>
 
       <!-- Primary Metric Cards Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
         <!-- Card 1: Total Requests -->
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
           <div class="flex items-center justify-between text-slate-500 mb-2">
@@ -212,6 +212,18 @@
           <div class="text-2xl font-bold text-red-600 font-mono tracking-tight" id="stat-blocked-ips">—</div>
           <div class="text-xs text-red-600 font-medium mt-2">
             Active Middleware Drops
+          </div>
+        </div>
+
+        <!-- Card 5: Rate-Limited Requests (HTTP 429) -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between border-l-4 border-l-indigo-600">
+          <div class="flex items-center justify-between text-slate-500 mb-2">
+            <span class="text-[11px] font-bold tracking-wider uppercase text-slate-500">Rate Limited</span>
+            <span class="material-symbols-outlined text-indigo-600 text-[20px]">speed</span>
+          </div>
+          <div class="text-2xl font-bold text-indigo-600 font-mono tracking-tight" id="stat-rate-limited">—</div>
+          <div class="text-xs text-indigo-600 font-medium mt-2">
+            5 req / 60s Policy
           </div>
         </div>
 
@@ -309,6 +321,42 @@
             </thead>
             <tbody id="recent-alerts-body" class="divide-y divide-slate-100 text-slate-700">
               <tr><td colspan="9" class="px-6 py-8 text-center text-slate-400">Loading security alerts…</td></tr>
+            </tbody>
+        </div>
+      </div>
+
+      <!-- Rate Limit Violations Panel -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden mb-6">
+        <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+            <div>
+              <h2 class="text-base font-bold text-slate-900 tracking-tight">Rate-Limited Requests &amp; Violations</h2>
+              <p class="text-xs text-slate-500">Live enforcement of 5 requests / 60 seconds sliding-window policy (HTTP 429)</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
+              Policy: 5 req / 60s
+            </span>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs md:text-sm">
+            <thead class="bg-slate-50/80 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[11px] font-semibold">
+              <tr>
+                <th class="px-5 py-3">Timestamp</th>
+                <th class="px-5 py-3">Client IP</th>
+                <th class="px-5 py-3">Method</th>
+                <th class="px-5 py-3">Endpoint</th>
+                <th class="px-5 py-3">Policy / Window</th>
+                <th class="px-5 py-3">Action Enforced</th>
+                <th class="px-5 py-3">Status</th>
+                <th class="px-5 py-3">Reason</th>
+              </tr>
+            </thead>
+            <tbody id="recent-ratelimit-body" class="divide-y divide-slate-100 text-slate-700">
+              <tr><td colspan="8" class="px-6 py-8 text-center text-slate-400">Loading rate limit events…</td></tr>
             </tbody>
           </table>
         </div>

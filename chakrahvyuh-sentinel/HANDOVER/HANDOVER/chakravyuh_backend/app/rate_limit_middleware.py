@@ -330,7 +330,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Skip rate limiting for exempt paths
         if (
             path in RATE_LIMIT_EXEMPT_PATHS
-            or path.startswith(("/docs", "/redoc", "/openapi", "/api/check-ip", "/blocked-ips", "/alerts"))
+            or path.startswith(("/docs", "/redoc", "/openapi", "/api/check-ip", "/blocked-ips", "/alerts", "/rate-limit", "/stats"))
         ):
             return await call_next(request)
         
