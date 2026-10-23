@@ -210,8 +210,23 @@ def _process_traffic_item(db: Session, payload: TrafficIngestRequest) -> dict:
     if request_timestamp.tzinfo is None:
         request_timestamp = request_timestamp.replace(tzinfo=timezone.utc)
 
-    # Format query data, annotating source website if specified
-    query_str = payload.query_data or ""
+    # Immediate SQL injection detection on raw data before sanitization
+    raw_query = payload.query_data or ""
+    sqli_res = detect_sqli(raw_query)
+    if not sqli_res["is_sqli"]:
+        sqli_res = detect_sqli(payload.endpoint)
+
+    # Sanitize query / body data to ensure passwords, tokens, and secrets are redacted
+    from app.payload_sanitizer import sanitize_query_string, sanitize_json_text
+    sanitized_data = raw_query
+    if raw_query:
+        trimmed = raw_query.strip()
+        if trimmed.startswith("{") or trimmed.startswith("["):
+            sanitized_data = sanitize_json_text(trimmed)
+        else:
+            sanitized_data = sanitize_query_string(trimmed)
+
+    query_str = sanitized_data
     if payload.website and "site:" not in query_str:
         prefix = f"[site:{payload.website}] "
         query_str = f"{prefix}{query_str}".strip()
@@ -245,11 +260,6 @@ def _process_traffic_item(db: Session, payload: TrafficIngestRequest) -> dict:
     action = "BLOCK" if is_blocked else "ALLOW"
     risk_score = None
     severity = None
-
-    # Immediate SQL injection detection (do not wait for session threshold)
-    sqli_res = detect_sqli(payload.query_data)
-    if not sqli_res["is_sqli"]:
-        sqli_res = detect_sqli(payload.endpoint)
 
     if sqli_res["is_sqli"]:
         action = "BLOCK"

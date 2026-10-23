@@ -124,6 +124,52 @@ SentinelPages.openAlertDrawer = function (alert) {
     }
   }
 
+  // Triggering request evidence
+  const alertReqBadge = document.getElementById("drawer-alert-req-badge");
+  const alertReqDetails = document.getElementById("drawer-alert-req-details");
+  if (alert.triggering_request) {
+    const tr = alert.triggering_request;
+    if (alertReqBadge) {
+      alertReqBadge.innerHTML = `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">Evidence Linked</span>`;
+    }
+    if (alertReqDetails) {
+      alertReqDetails.innerHTML = `
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 font-semibold">Request:</span>
+            <div class="flex items-center gap-1.5">
+              ${F.methodBadge ? F.methodBadge(tr.method) : `<span class="font-bold">${tr.method}</span>`}
+              <span class="font-mono text-slate-800 font-bold">${tr.endpoint}</span>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 font-semibold">Status Code:</span>
+            <span>${F.statusCodeBadge ? F.statusCodeBadge(tr.status_code) : tr.status_code}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 font-semibold">Timestamp:</span>
+            <span class="font-mono text-slate-600">${F.datetime(tr.timestamp)}</span>
+          </div>
+        </div>
+        <div>
+          <div class="text-[11px] font-semibold text-slate-500 uppercase mb-1">Sanitized Query / Payload Input</div>
+          <div class="bg-slate-900 text-emerald-400 p-3 rounded font-mono text-xs overflow-x-auto whitespace-pre-wrap select-all max-h-48 border border-slate-800">${
+            tr.query_data ? tr.query_data.replace(/</g, "&lt;").replace(/>/g, "&gt;") : '<span class="text-slate-500 italic">No query parameters or payload body</span>'
+          }</div>
+        </div>
+      `;
+    }
+  } else {
+    if (alertReqBadge) {
+      alertReqBadge.innerHTML = `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">No Request Linked</span>`;
+    }
+    if (alertReqDetails) {
+      alertReqDetails.innerHTML = `
+        <div class="p-3 bg-amber-50 border border-amber-200 rounded text-amber-800 text-xs font-medium">Triggering request details unavailable</div>
+      `;
+    }
+  }
+
   // Show drawer
   overlay.classList.remove("hidden");
   requestAnimationFrame(() => {
@@ -132,6 +178,113 @@ SentinelPages.openAlertDrawer = function (alert) {
   });
 
   const closeBtn = document.getElementById("close-alert-drawer");
+  const closeHandler = () => {
+    drawer.classList.add("translate-x-full");
+    overlay.classList.add("opacity-0");
+    setTimeout(() => {
+      overlay.classList.add("hidden");
+      closeBtn?.removeEventListener("click", closeHandler);
+      overlay?.removeEventListener("click", closeHandler);
+    }, 300);
+  };
+  closeBtn?.addEventListener("click", closeHandler);
+  overlay?.addEventListener("click", (e) => {
+    if (e.target === overlay) closeHandler();
+  });
+};
+
+// REUSABLE BLOCKED IP INVESTIGATION DRAWER CONTROLLER
+// -------------------------------------------------------------
+SentinelPages.openBlockedIpDrawer = function (block) {
+  if (!block) return;
+  const F = window.SentinelFormat;
+  const drawer = document.getElementById("blocked-detail-drawer");
+  const overlay = document.getElementById("blocked-detail-overlay");
+  if (!drawer || !overlay) return;
+
+  setText("drawer-block-ip", `Blocked IP: ${block.ip}`);
+  setText("drawer-block-time", `Blocked at: ${F.datetime(block.blocked_at)}`);
+  setHTML(
+    "drawer-block-status",
+    `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+      block.is_active
+        ? "bg-red-50 text-red-700 border border-red-200"
+        : "bg-slate-100 text-slate-600 border border-slate-200"
+    }"><span class="w-1.5 h-1.5 rounded-full ${block.is_active ? "bg-red-600 animate-pulse" : "bg-slate-400"}"></span>${block.is_active ? "ACTIVE ENFORCEMENT" : "EXPIRED"}</span>`
+  );
+  setText("drawer-block-until", block.blocked_until ? F.datetime(block.blocked_until) : "Permanent");
+  setHTML("drawer-block-prediction", F.predictionBadge(block.prediction));
+  setText("drawer-block-confidence", F.percent(block.confidence));
+  setText("drawer-block-reason", block.reason || "Suspicious or malicious activity threshold exceeded.");
+
+  const reqBadge = document.getElementById("drawer-req-badge");
+  const reqDetails = document.getElementById("drawer-req-details");
+
+  if (block.triggering_request) {
+    const tr = block.triggering_request;
+    if (reqBadge) {
+      reqBadge.innerHTML = `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">Evidence Linked</span>`;
+    }
+    if (reqDetails) {
+      reqDetails.innerHTML = `
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 font-semibold">Request:</span>
+            <div class="flex items-center gap-1.5">
+              ${F.methodBadge ? F.methodBadge(tr.method) : `<span class="font-bold">${tr.method}</span>`}
+              <span class="font-mono text-slate-800 font-bold">${tr.endpoint}</span>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 font-semibold">Status Code:</span>
+            <span>${F.statusCodeBadge ? F.statusCodeBadge(tr.status_code) : tr.status_code}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 font-semibold">Timestamp:</span>
+            <span class="font-mono text-slate-600">${F.datetime(tr.timestamp)}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 font-semibold">Source Site:</span>
+            <span class="font-mono text-slate-600">${tr.source_site || "sentinel"}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 font-semibold">Session ID:</span>
+            <span class="font-mono text-slate-600 text-[11px]">${tr.session_id ? F.sessionIdShort(tr.session_id) : "None"}</span>
+          </div>
+        </div>
+        <div>
+          <div class="text-[11px] font-semibold text-slate-500 uppercase mb-1">Sanitized Query / Payload Input</div>
+          <div class="bg-slate-900 text-emerald-400 p-3 rounded font-mono text-xs overflow-x-auto whitespace-pre-wrap select-all max-h-48 border border-slate-800">${
+            tr.query_data ? tr.query_data.replace(/</g, "&lt;").replace(/>/g, "&gt;") : '<span class="text-slate-500 italic">No query parameters or payload body</span>'
+          }</div>
+        </div>
+      `;
+    }
+  } else {
+    if (reqBadge) {
+      reqBadge.innerHTML = `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">No Request Linked</span>`;
+    }
+    if (reqDetails) {
+      reqDetails.innerHTML = `
+        <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs font-medium flex items-start gap-2">
+          <span class="material-symbols-outlined text-[18px] text-amber-600 shrink-0">info</span>
+          <div>
+            <div class="font-bold">Triggering request details unavailable</div>
+            <div class="mt-0.5 text-amber-700">This block record has no correlated request log in the telemetry database (e.g. administrative block or external rule).</div>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // Show drawer
+  overlay.classList.remove("hidden");
+  requestAnimationFrame(() => {
+    overlay.classList.remove("opacity-0");
+    drawer.classList.remove("translate-x-full");
+  });
+
+  const closeBtn = document.getElementById("close-blocked-drawer");
   const closeHandler = () => {
     drawer.classList.add("translate-x-full");
     overlay.classList.add("opacity-0");
@@ -565,12 +718,13 @@ SentinelPages["blocked-ips"] = async function () {
 
     if (!tbody) return;
     if (filtered.length === 0) {
-      tbody.innerHTML = emptyRow(8, "No blocked IP addresses match the criteria.", "check_circle");
+      tbody.innerHTML = emptyRow(9, "No blocked IP addresses match the criteria.", "check_circle");
       return;
     }
 
     tbody.innerHTML = filtered
       .map((b) => {
+        const hasReq = !!b.triggering_request;
         return `
         <tr class="hover:bg-slate-50 transition-colors">
           <td class="px-5 py-3.5 font-mono text-xs font-bold text-slate-900">${b.ip}</td>
@@ -590,13 +744,31 @@ SentinelPages["blocked-ips"] = async function () {
           <td class="px-5 py-3.5 text-xs text-slate-600 max-w-[200px] truncate" title="${b.reason || ""}">${F.truncate(b.reason, 36)}</td>
           <td class="px-5 py-3.5 font-mono text-xs text-slate-500 whitespace-nowrap">${F.datetime(b.blocked_at)}</td>
           <td class="px-5 py-3.5 font-mono text-xs text-slate-500 whitespace-nowrap">${b.blocked_until ? F.datetime(b.blocked_until) : "Permanent"}</td>
+          <td class="px-5 py-3.5 whitespace-nowrap">
+            <button data-block-id="${b.id}" class="view-block-btn inline-flex items-center gap-1 px-2.5 py-1 rounded ${
+              hasReq
+                ? "bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
+            } text-xs font-semibold transition-colors">
+              <span class="material-symbols-outlined text-[15px]">${hasReq ? "search_insights" : "info"}</span>
+              ${hasReq ? "Inspect" : "Details"}
+            </button>
+          </td>
         </tr>`;
       })
       .join("");
+
+    tbody.querySelectorAll(".view-block-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = Number(btn.getAttribute("data-block-id"));
+        const block = allBlocks.find((item) => item.id === id);
+        if (block) SentinelPages.openBlockedIpDrawer(block);
+      });
+    });
   }
 
   async function load() {
-    if (tbody) tbody.innerHTML = skeletonRows(8, 4);
+    if (tbody) tbody.innerHTML = skeletonRows(9, 4);
 
     try {
       const blocks = await SentinelAPI.getBlockedIps({ active_only: false, limit: 200 });
@@ -680,7 +852,8 @@ SentinelPages.requests = async function () {
         const epMatch = (r.endpoint || "").toLowerCase().includes(q);
         const siteMatch = (r.source_site || "").toLowerCase().includes(q);
         const sessMatch = (r.session_id || "").toLowerCase().includes(q);
-        if (!ipMatch && !epMatch && !siteMatch && !sessMatch) return false;
+        const qMatch = (r.query_data || "").toLowerCase().includes(q);
+        if (!ipMatch && !epMatch && !siteMatch && !sessMatch && !qMatch) return false;
       }
       if (method && (r.method || "").toUpperCase() !== method) return false;
       if (statusRange) {
@@ -734,8 +907,11 @@ SentinelPages.requests = async function () {
           <td class="px-5 py-3 font-mono text-xs text-slate-500 whitespace-nowrap">${F.datetime(r.timestamp)}</td>
           <td class="px-5 py-3 font-mono text-xs font-semibold text-slate-800 whitespace-nowrap">${r.ip || "—"}</td>
           <td class="px-5 py-3 whitespace-nowrap">${F.methodBadge(r.method)}</td>
-          <td class="px-5 py-3 font-mono text-xs text-slate-800 max-w-[320px] truncate" title="${r.endpoint || ""}">
-            ${r.source_site ? `<span class="inline-block px-1.5 py-0.5 mr-1.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-sky-50 text-sky-700 border border-sky-200">${r.source_site}</span>` : ""}${r.endpoint || "/"}
+          <td class="px-5 py-3 font-mono text-xs text-slate-800 max-w-[340px]">
+            <div class="truncate" title="${r.endpoint || ""}">
+              ${r.source_site ? `<span class="inline-block px-1.5 py-0.5 mr-1.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-sky-50 text-sky-700 border border-sky-200">${r.source_site}</span>` : ""}${r.endpoint || "/"}
+            </div>
+            ${r.query_data ? `<div class="text-[11px] font-mono text-amber-700 truncate mt-0.5" title="${r.query_data.replace(/"/g, '&quot;')}">↳ ${r.query_data.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>` : ""}
           </td>
           <td class="px-5 py-3 whitespace-nowrap">${F.statusCodeBadge(r.status_code)}</td>
           <td class="px-5 py-3 font-mono text-xs text-slate-600 whitespace-nowrap text-right">${Math.round(r.response_time_ms || 0)}ms</td>

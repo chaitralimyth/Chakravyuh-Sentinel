@@ -37,6 +37,63 @@ def _alerts_for_source(db: Session, source_site: str):
     return query
 
 
+def _find_triggering_request(db: Session, ip: str, timestamp: Optional[datetime], session_id: Optional[str] = None) -> Optional[dict]:
+    """
+    Correlates a block or alert to its concrete triggering request log.
+    If no request is found in the database, returns None (never fabricates evidence).
+    """
+    req = None
+    if session_id:
+        req = (
+            db.query(RequestLog)
+            .filter(RequestLog.session_id == session_id)
+            .order_by(RequestLog.timestamp.desc())
+            .first()
+        )
+
+    if not req and ip:
+        if timestamp:
+            ts = timestamp if timestamp.tzinfo else timestamp.replace(tzinfo=timezone.utc)
+            window_end = ts + timedelta(seconds=10)
+            window_start = ts - timedelta(hours=2)
+            req = (
+                db.query(RequestLog)
+                .filter(
+                    RequestLog.ip == ip,
+                    RequestLog.timestamp >= window_start,
+                    RequestLog.timestamp <= window_end,
+                )
+                .order_by(RequestLog.timestamp.desc())
+                .first()
+            )
+
+        if not req:
+            req = (
+                db.query(RequestLog)
+                .filter(RequestLog.ip == ip)
+                .order_by(RequestLog.timestamp.desc())
+                .first()
+            )
+
+    if not req:
+        return None
+
+    return {
+        "id": req.id,
+        "session_id": req.session_id,
+        "method": req.method,
+        "endpoint": req.endpoint,
+        "status_code": req.status_code,
+        "timestamp": _iso(req.timestamp),
+        "source_site": req.source_site,
+        "query_data": req.query_data or "",
+        "query_length": req.query_length or 0,
+        "request_size": req.request_size or 0,
+        "response_size": req.response_size or 0,
+        "response_time_ms": req.response_time_ms or 0.0,
+    }
+
+
 @router.get("/alerts")
 def list_alerts(
     db: Session = Depends(get_db),
@@ -70,6 +127,7 @@ def list_alerts(
             "reason": a.reason,
             "created_at": _iso(a.created_at),
             "is_read": a.is_read,
+            "triggering_request": _find_triggering_request(db, a.ip, a.created_at, session_id=a.session_id),
         }
         for a in alerts
     ]
@@ -82,7 +140,7 @@ def list_blocked_ips(
     limit: int = Query(100, ge=1, le=500),
     active_only: bool = True,
 ):
-    """Fetch blocked IP records."""
+    """Fetch blocked IP records with correlated triggering request evidence."""
     query = db.query(BlockedIP)
     if active_only:
         query = query.filter(BlockedIP.is_active.is_(True))
@@ -103,9 +161,31 @@ def list_blocked_ips(
             "blocked_at": _iso(b.blocked_at),
             "blocked_until": _iso(b.blocked_until),
             "is_active": b.is_active,
+            "triggering_request": _find_triggering_request(db, b.ip, b.blocked_at),
         }
         for b in blocks
     ]
+
+
+@router.get("/blocked-ips/{block_id}/evidence")
+def get_blocked_ip_evidence(block_id: int, db: Session = Depends(get_db)):
+    """Fetch linked triggering request and evidence for a specific blocked IP."""
+    block = db.query(BlockedIP).filter(BlockedIP.id == block_id).first()
+    if not block:
+        raise HTTPException(status_code=404, detail="Blocked IP record not found")
+
+    triggering_req = _find_triggering_request(db, block.ip, block.blocked_at)
+    return {
+        "block_id": block.id,
+        "ip": block.ip,
+        "reason": block.reason,
+        "prediction": block.prediction,
+        "confidence": block.confidence,
+        "blocked_at": _iso(block.blocked_at),
+        "blocked_until": _iso(block.blocked_until),
+        "is_active": block.is_active,
+        "triggering_request": triggering_req,
+    }
 
 
 @router.get("/requests")

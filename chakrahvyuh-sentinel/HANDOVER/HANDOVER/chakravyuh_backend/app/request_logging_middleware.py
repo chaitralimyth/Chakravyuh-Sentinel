@@ -51,8 +51,14 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         content_length_header = request.headers.get("content-length")
         request_size = int(content_length_header) if content_length_header and content_length_header.isdigit() else 0
 
-        query_string = request.url.query or ""
-        query_length = len(query_string)
+        # Retrieve sanitized query/body evidence cached by upstream IPBlockMiddleware,
+        # or sanitize the URL query string directly without consuming the request body.
+        query_evidence = getattr(request.state, "query_evidence", None)
+        if query_evidence is None:
+            from app.payload_sanitizer import sanitize_query_string
+            q_str = sanitize_query_string(request.url.query)
+            query_evidence = f"query: {q_str}" if q_str else ""
+        query_length = len(query_evidence)
 
         response = await call_next(request)
 
@@ -90,7 +96,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     response_size=len(response_body),
                     response_time_ms=response_time_ms,
                     query_length=query_length,
-                    query_data=query_string[:2000],  # truncate to avoid unbounded storage
+                    query_data=query_evidence[:2000],  # sanitized and truncated to avoid unbounded storage
                 )
                 db.add(log)
                 db.commit()

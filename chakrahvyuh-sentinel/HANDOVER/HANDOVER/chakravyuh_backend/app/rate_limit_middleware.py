@@ -328,7 +328,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         path = request.url.path
         
         # Skip rate limiting for exempt paths
-        if path in RATE_LIMIT_EXEMPT_PATHS or path.startswith(("/docs", "/redoc", "/openapi", "/api/check-ip")):
+        if (
+            path in RATE_LIMIT_EXEMPT_PATHS
+            or path.startswith(("/docs", "/redoc", "/openapi", "/api/check-ip", "/blocked-ips", "/alerts"))
+        ):
             return await call_next(request)
         
         client_ip = get_client_ip(request)
@@ -359,6 +362,41 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if not is_allowed:
             # Log rate limit violation to database
             self._log_rate_limit_violation(client_ip, request, rate_info)
+
+            # Record telemetry in RequestLog with 429 status and sanitized evidence
+            try:
+                from app.session_builder import get_or_create_session
+                from app.db_models import RequestLog
+
+                q_ev = getattr(request.state, "query_evidence", "")
+                if not q_ev:
+                    from app.payload_sanitizer import sanitize_query_string
+                    qs = sanitize_query_string(request.url.query)
+                    q_ev = f"query: {qs}" if qs else ""
+                q_len = len(q_ev)
+                db_rl = SessionLocal()
+                try:
+                    sess = get_or_create_session(db_rl, client_ip, source_site="sentinel")
+                    rl_log = RequestLog(
+                        session_id=sess.session_id,
+                        timestamp=datetime.now(timezone.utc),
+                        ip=client_ip,
+                        source_site="sentinel",
+                        method=request.method,
+                        endpoint=path,
+                        status_code=429,
+                        request_size=0,
+                        response_size=120,
+                        response_time_ms=0.0,
+                        query_length=q_len,
+                        query_data=q_ev[:2000],
+                    )
+                    db_rl.add(rl_log)
+                    db_rl.commit()
+                finally:
+                    db_rl.close()
+            except Exception as rl_err:
+                pass
             
             retry_after = max(1, rate_info["reset"] - int(time.time()))
             detail_msg = (

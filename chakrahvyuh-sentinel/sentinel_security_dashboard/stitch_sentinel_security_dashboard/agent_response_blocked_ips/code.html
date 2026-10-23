@@ -182,15 +182,85 @@
                 <th class="px-5 py-3">Reason</th>
                 <th class="px-5 py-3">Blocked At</th>
                 <th class="px-5 py-3">Blocked Until</th>
+                <th class="px-5 py-3">Investigation</th>
               </tr>
             </thead>
             <tbody id="blocked-ips-body" class="divide-y divide-slate-100 text-slate-700">
-              <tr><td colspan="8" class="px-6 py-8 text-center text-slate-400">Loading blocked IP records…</td></tr>
+              <tr><td colspan="9" class="px-6 py-8 text-center text-slate-400">Loading blocked IP records…</td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Reusable Slide-over Blocked IP Investigation Drawer -->
+  <div id="blocked-detail-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 transition-opacity duration-300 hidden opacity-0 flex justify-end">
+    <div id="blocked-detail-drawer" class="w-full max-w-lg bg-white h-full shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300">
+      <!-- Drawer Header -->
+      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-red-100 text-red-700 flex items-center justify-center font-bold">
+            <span class="material-symbols-outlined text-[18px]">gavel</span>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 text-base" id="drawer-block-ip">Blocked IP Investigation</h3>
+            <span class="text-xs text-slate-500" id="drawer-block-time">—</span>
+          </div>
+        </div>
+        <button id="close-blocked-drawer" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <!-- Drawer Content -->
+      <div class="p-6 overflow-y-auto flex-1 space-y-5">
+        <!-- Status & Policy -->
+        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Enforcement Status</span>
+            <div id="drawer-block-status">—</div>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Enforced Action</span>
+            <span class="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800">BLOCK (HTTP 403)</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Block Duration</span>
+            <span class="font-mono text-xs text-slate-700" id="drawer-block-until">—</span>
+          </div>
+        </div>
+
+        <!-- Threat Metadata -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="p-3.5 bg-white border border-slate-200 rounded-lg">
+            <div class="text-[11px] font-semibold text-slate-500 uppercase">Prediction</div>
+            <div class="mt-1" id="drawer-block-prediction">—</div>
+          </div>
+          <div class="p-3.5 bg-white border border-slate-200 rounded-lg">
+            <div class="text-[11px] font-semibold text-slate-500 uppercase">Confidence</div>
+            <div class="mt-1 font-mono font-bold text-slate-900 text-sm" id="drawer-block-confidence">—</div>
+          </div>
+        </div>
+
+        <!-- Reason -->
+        <div class="p-4 bg-white border border-slate-200 rounded-lg">
+          <div class="text-[11px] font-semibold text-slate-500 uppercase mb-1">Block Trigger Reason</div>
+          <p class="text-xs text-slate-800 font-medium leading-relaxed" id="drawer-block-reason">—</p>
+        </div>
+
+        <!-- Triggering Request Evidence Section -->
+        <div class="p-4 bg-white border border-slate-200 rounded-lg">
+          <div class="text-[11px] font-semibold text-slate-500 uppercase mb-2 flex items-center justify-between">
+            <span>Triggering Request & Input Evidence</span>
+            <span id="drawer-req-badge"></span>
+          </div>
+          <div id="drawer-req-details" class="space-y-2 text-xs">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="../js/config.js"></script>
