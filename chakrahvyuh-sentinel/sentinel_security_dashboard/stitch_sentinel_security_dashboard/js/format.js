@@ -11,53 +11,82 @@ window.SentinelFormat = {
     return `${pct.toFixed(1)}%`;
   },
 
+  parseUtc(iso) {
+    if (!iso) return null;
+    if (iso instanceof Date) return isNaN(iso.getTime()) ? null : iso;
+    let str = String(iso).trim();
+    if (!str) return null;
+    if (str.includes(" ") && !str.includes("T")) {
+      str = str.replace(" ", "T");
+    }
+    // If no timezone offset or Z, explicitly treat as UTC
+    if (!/([zZ]|[+-]\d{2}:?\d{2})$/.test(str)) {
+      str += "Z";
+    }
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? null : d;
+  },
+
   time(iso) {
-    if (!iso) return "—";
+    const d = this.parseUtc(iso);
+    if (!d) return "—";
     try {
-      return new Date(iso).toLocaleTimeString([], {
+      const formatted = new Intl.DateTimeFormat("en-IN", {
+        timeZone: "Asia/Kolkata",
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
-      });
+        hour12: true,
+      }).format(d);
+      return formatted.replace(/\b([ap]m)\b/gi, (m) => m.toUpperCase());
     } catch {
       return "—";
     }
   },
 
   datetime(iso) {
-    if (!iso) return "—";
+    const d = this.parseUtc(iso);
+    if (!d) return "—";
     try {
-      return new Date(iso).toLocaleString(undefined, {
+      const formatted = new Intl.DateTimeFormat("en-IN", {
+        timeZone: "Asia/Kolkata",
+        day: "2-digit",
         month: "short",
-        day: "numeric",
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
-      });
+        second: "2-digit",
+        hour12: true,
+      }).format(d);
+      return formatted.replace(/\b([ap]m)\b/gi, (m) => m.toUpperCase());
     } catch {
       return "—";
     }
   },
 
   date(iso) {
-    if (!iso) return "—";
+    const d = this.parseUtc(iso);
+    if (!d) return "—";
     try {
-      return new Date(iso).toLocaleDateString(undefined, {
+      return new Intl.DateTimeFormat("en-IN", {
+        timeZone: "Asia/Kolkata",
+        day: "2-digit",
         month: "short",
-        day: "numeric",
         year: "numeric",
-      });
+      }).format(d);
     } catch {
       return "—";
     }
   },
 
   relativeTime(iso) {
-    if (!iso) return "—";
+    const d = this.parseUtc(iso);
+    if (!d) return "—";
     try {
       const now = Date.now();
-      const past = new Date(iso).getTime();
+      const past = d.getTime();
       const diffSec = Math.floor((now - past) / 1000);
+      if (diffSec < 0) return "just now";
       if (diffSec < 60) return `${Math.max(1, diffSec)}s ago`;
       const diffMin = Math.floor(diffSec / 60);
       if (diffMin < 60) return `${diffMin}m ago`;

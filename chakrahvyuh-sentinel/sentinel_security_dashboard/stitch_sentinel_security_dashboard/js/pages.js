@@ -647,17 +647,40 @@ SentinelPages.requests = async function () {
   const searchInput = document.getElementById("request-search");
   const methodFilter = document.getElementById("request-method-filter");
   const statusFilter = document.getElementById("request-status-filter");
+  const siteFilter = document.getElementById("request-site-filter");
   const refreshBtn = document.getElementById("refresh-requests-btn");
   let allRequests = [];
+  let isInitialLoad = true;
+
+  if (window._sentinelRequestsPollInterval) {
+    clearInterval(window._sentinelRequestsPollInterval);
+    window._sentinelRequestsPollInterval = null;
+  }
 
   function applyFilters() {
     const q = (searchInput?.value || "").trim().toLowerCase();
     const method = (methodFilter?.value || "").toUpperCase();
     const statusRange = statusFilter?.value || "";
+    const site = (siteFilter?.value || "").toLowerCase();
 
-    const filtered = allRequests.filter((r) => {
-      if (q && !((r.ip || "").toLowerCase().includes(q) || (r.endpoint || "").toLowerCase().includes(q))) {
+    // Ensure newest records always display at the top
+    const sorted = [...allRequests].sort((a, b) => {
+      const idA = Number(a.id) || 0;
+      const idB = Number(b.id) || 0;
+      if (idA && idB) return idB - idA;
+      return new Date(b.timestamp || 0) - new Date(a.timestamp || 0);
+    });
+
+    const filtered = sorted.filter((r) => {
+      if (site && site !== "all" && (r.source_site || "").toLowerCase() !== site) {
         return false;
+      }
+      if (q) {
+        const ipMatch = (r.ip || "").toLowerCase().includes(q);
+        const epMatch = (r.endpoint || "").toLowerCase().includes(q);
+        const siteMatch = (r.source_site || "").toLowerCase().includes(q);
+        const sessMatch = (r.session_id || "").toLowerCase().includes(q);
+        if (!ipMatch && !epMatch && !siteMatch && !sessMatch) return false;
       }
       if (method && (r.method || "").toUpperCase() !== method) return false;
       if (statusRange) {
@@ -671,12 +694,36 @@ SentinelPages.requests = async function () {
     });
 
     if (countLabel) {
-      countLabel.textContent = `Showing ${filtered.length} of ${allRequests.length} recent requests`;
+      countLabel.innerHTML = `<span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Showing <strong class="text-slate-800">${filtered.length}</strong> of ${allRequests.length} recent requests</span>`;
     }
 
     if (!tbody) return;
+
+    if (allRequests.length === 0) {
+      tbody.innerHTML = emptyRow(7, "No HTTP traffic recorded yet. Events from protected sites will appear here automatically.", "inbox");
+      return;
+    }
+
     if (filtered.length === 0) {
-      tbody.innerHTML = emptyRow(7, "No request logs match the selected filters.", "search_off");
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="px-6 py-12 text-center text-slate-500">
+            <div class="flex flex-col items-center justify-center gap-3">
+              <span class="material-symbols-outlined text-slate-400 text-[32px]">search_off</span>
+              <p class="font-medium text-sm text-slate-700">No request logs match the selected filters.</p>
+              <button id="clear-request-filters-btn" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors border border-slate-300">
+                Clear Filters
+              </button>
+            </div>
+          </td>
+        </tr>`;
+      document.getElementById("clear-request-filters-btn")?.addEventListener("click", () => {
+        if (searchInput) searchInput.value = "";
+        if (methodFilter) methodFilter.value = "";
+        if (statusFilter) statusFilter.value = "";
+        if (siteFilter) siteFilter.value = "";
+        applyFilters();
+      });
       return;
     }
 
@@ -685,9 +732,11 @@ SentinelPages.requests = async function () {
         (r) => `
         <tr class="hover:bg-slate-50 transition-colors">
           <td class="px-5 py-3 font-mono text-xs text-slate-500 whitespace-nowrap">${F.datetime(r.timestamp)}</td>
-          <td class="px-5 py-3 font-mono text-xs font-semibold text-slate-800 whitespace-nowrap">${r.ip}</td>
+          <td class="px-5 py-3 font-mono text-xs font-semibold text-slate-800 whitespace-nowrap">${r.ip || "—"}</td>
           <td class="px-5 py-3 whitespace-nowrap">${F.methodBadge(r.method)}</td>
-          <td class="px-5 py-3 font-mono text-xs text-slate-800 max-w-[280px] truncate" title="${r.endpoint}">${r.endpoint}</td>
+          <td class="px-5 py-3 font-mono text-xs text-slate-800 max-w-[320px] truncate" title="${r.endpoint || ""}">
+            ${r.source_site ? `<span class="inline-block px-1.5 py-0.5 mr-1.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-sky-50 text-sky-700 border border-sky-200">${r.source_site}</span>` : ""}${r.endpoint || "/"}
+          </td>
           <td class="px-5 py-3 whitespace-nowrap">${F.statusCodeBadge(r.status_code)}</td>
           <td class="px-5 py-3 font-mono text-xs text-slate-600 whitespace-nowrap text-right">${Math.round(r.response_time_ms || 0)}ms</td>
           <td class="px-5 py-3 font-mono text-xs text-slate-500 whitespace-nowrap">${F.sessionIdShort(r.session_id)}</td>
@@ -696,30 +745,94 @@ SentinelPages.requests = async function () {
       .join("");
   }
 
-  async function load() {
-    if (tbody) tbody.innerHTML = skeletonRows(7, 6);
+  async function load(isSilent = false) {
+    if (!isSilent && tbody && isInitialLoad) {
+      tbody.innerHTML = skeletonRows(7, 6);
+      if (countLabel) countLabel.textContent = "Connecting to Sentinel telemetry API...";
+    }
 
     try {
-      const logs = await SentinelAPI.getRequests({ limit: 100 });
+      const selectedSite = siteFilter?.value || "";
+      const params = { limit: 100 };
+      if (selectedSite && selectedSite !== "all") {
+        params.source_site = selectedSite;
+      } else {
+        params.source_site = "all";
+      }
+
+      const raw = await SentinelAPI.getRequests(params);
+      let logs = [];
+      if (Array.isArray(raw)) {
+        logs = raw;
+      } else if (raw && Array.isArray(raw.requests)) {
+        logs = raw.requests;
+      } else if (raw && Array.isArray(raw.data)) {
+        logs = raw.data;
+      } else {
+        logs = [];
+      }
+
       allRequests = logs;
       applyFilters();
+      isInitialLoad = false;
     } catch (err) {
-      console.error(err);
-      if (tbody) tbody.innerHTML = emptyRow(7, "Unable to load request logs from API.", "error");
+      console.error("Sentinel Requests API Error:", err);
+      if (isInitialLoad && tbody) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="px-6 py-12 text-center">
+              <div class="flex flex-col items-center justify-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center border border-red-200">
+                  <span class="material-symbols-outlined text-[24px]">error</span>
+                </div>
+                <h3 class="font-semibold text-slate-800 text-sm">Failed to Load Request Telemetry</h3>
+                <p class="text-xs text-slate-500 max-w-md">Could not fetch request stream from <code class="bg-slate-100 px-1 py-0.5 rounded text-slate-700">${SentinelAPI.buildUrl("/requests")}</code>. Ensure the Sentinel backend is online.</p>
+                <button id="retry-requests-btn" class="mt-1 px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-xs flex items-center gap-1.5">
+                  <span class="material-symbols-outlined text-[16px]">refresh</span>
+                  Retry Connection
+                </button>
+              </div>
+            </td>
+          </tr>`;
+        document.getElementById("retry-requests-btn")?.addEventListener("click", () => {
+          isInitialLoad = true;
+          load(false);
+        });
+      }
+      if (countLabel) {
+        countLabel.innerHTML = `<span class="text-red-600 font-semibold text-xs flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">warning</span> Telemetry API Disconnected</span>`;
+      }
     }
   }
 
   searchInput?.addEventListener("input", applyFilters);
   methodFilter?.addEventListener("change", applyFilters);
   statusFilter?.addEventListener("change", applyFilters);
+  siteFilter?.addEventListener("change", () => load(false));
+
   if (refreshBtn) {
     refreshBtn.addEventListener("click", async () => {
-      await load();
-      SentinelUI.showToast("Requests refreshed", "success");
+      refreshBtn.classList.add("opacity-75");
+      await load(false);
+      refreshBtn.classList.remove("opacity-75");
+      SentinelUI.showToast("Request telemetry refreshed", "success");
     });
   }
 
-  await load();
+  // Initial load
+  await load(false);
+
+  // Auto-refresh every 3 seconds for live streaming
+  window._sentinelRequestsPollInterval = setInterval(() => {
+    load(true);
+  }, 3000);
+
+  window.addEventListener("beforeunload", () => {
+    if (window._sentinelRequestsPollInterval) {
+      clearInterval(window._sentinelRequestsPollInterval);
+      window._sentinelRequestsPollInterval = null;
+    }
+  });
 };
 
 // -------------------------------------------------------------

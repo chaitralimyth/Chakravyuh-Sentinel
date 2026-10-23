@@ -19,7 +19,12 @@ router = APIRouter(tags=["dashboard"])
 
 
 def _iso(dt) -> Optional[str]:
-    return dt.isoformat() if dt else None
+    """Serialize datetime to standard UTC ISO-8601 string with Z suffix."""
+    if not dt:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.isoformat().replace("+00:00", "Z")
 
 
 def _alerts_for_source(db: Session, source_site: str):
@@ -124,8 +129,8 @@ def list_requests(
     query = db.query(RequestLog)
     if ip:
         query = query.filter(RequestLog.ip == ip)
-    source_site = source_site.strip().lower()
-    if source_site != "all":
+    source_site = (source_site or "").strip().lower()
+    if source_site and source_site != "all":
         query = query.filter(RequestLog.source_site == source_site)
     if endpoint:
         query = query.filter(RequestLog.endpoint.contains(endpoint))
@@ -133,7 +138,7 @@ def list_requests(
         query = query.filter(RequestLog.session_id == session_id)
 
     logs = (
-        query.order_by(RequestLog.timestamp.desc())
+        query.order_by(RequestLog.id.desc())
         .offset(offset)
         .limit(limit)
         .all()

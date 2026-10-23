@@ -34,10 +34,10 @@ app = FastAPI(title="Chakravyuh Sentinel API")
 logger = logging.getLogger(__name__)
 
 # Middleware: innermost first, CORS outermost (handles OPTIONS preflight)
-# Order: RequestLogging -> IPBlock -> RateLimit -> CORS
+# Order of execution: CORS -> IPBlockMiddleware -> RateLimitMiddleware -> RequestLoggingMiddleware
 app.add_middleware(RequestLoggingMiddleware)
-app.add_middleware(IPBlockMiddleware)
 app.add_middleware(RateLimitMiddleware)
+app.add_middleware(IPBlockMiddleware)
 
 # Enable CORS for all external websites, supporting credentials and all HTTP methods/headers
 if CORS_ORIGINS == "*" or "*" in ALLOWED_ORIGINS:
@@ -394,6 +394,36 @@ def check_ip_status(ip: str, db: Session = Depends(get_db)):
         "action": action,
         "risk_score": cached_risk if cached_risk is not None else 0.0,
         "rate_limit_info": rate_info,
+    }
+
+
+class UnblockIPPayload(BaseModel):
+    ip: str = Field(..., description="IP address to unblock")
+
+
+@app.post("/api/unblock-ip")
+def api_unblock_ip(payload: UnblockIPPayload, db: Session = Depends(get_db)):
+    """
+    Safely unblocks an IP address, deactivating active blocks in the database
+    and resetting rate limiting risk scores. Enables fast test reset in demos.
+    """
+    blocks = (
+        db.query(BlockedIP)
+        .filter(BlockedIP.ip == payload.ip, BlockedIP.is_active.is_(True))
+        .all()
+    )
+    for b in blocks:
+        b.is_active = False
+    db.commit()
+
+    # Reset in-memory rate limiter risk and tracking history
+    _rate_limiter.reset_ip(payload.ip)
+
+    return {
+        "success": True,
+        "ip": payload.ip,
+        "message": f"IP {payload.ip} unblocked successfully",
+        "deactivated_blocks": len(blocks),
     }
 
 

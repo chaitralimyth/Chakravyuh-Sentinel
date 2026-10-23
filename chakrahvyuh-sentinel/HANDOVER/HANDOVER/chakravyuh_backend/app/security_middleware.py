@@ -23,19 +23,22 @@ logger = logging.getLogger(__name__)
 # Dashboard, health, and status monitoring endpoints that remain reachable
 _EXEMPT_PATHS = {
     "/",
+    "/health",
     "/stats",
     "/statistics",
     "/alerts",
     "/blocked-ips",
     "/sessions",
     "/incidents",
+    "/requests",
     "/docs",
     "/redoc",
     "/openapi.json",
     "/api/check-ip",
+    "/api/unblock-ip",
 }
 
-ALLOW_LOCALHOST_BYPASS = os.getenv("ALLOW_LOCALHOST_BYPASS", "true").lower() in ("true", "1")
+ALLOW_LOCALHOST_BYPASS = os.getenv("ALLOW_LOCALHOST_BYPASS", "false").lower() in ("true", "1")
 
 
 class IPBlockMiddleware(BaseHTTPMiddleware):

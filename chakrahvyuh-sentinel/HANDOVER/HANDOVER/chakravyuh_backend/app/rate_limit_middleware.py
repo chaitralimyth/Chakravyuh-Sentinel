@@ -5,10 +5,11 @@ Implements per-IP rate limiting with configurable time windows and burst capacit
 Uses in-memory tracking for efficiency with automatic cleanup of old entries.
 """
 
+import threading
 import time
 from collections import defaultdict, deque
-from datetime import datetime, timezone
-from typing import Dict, Deque, Tuple, Optional, Any
+from datetime import datetime, timezone, timedelta
+from typing import Dict, Deque, Tuple, Optional, Any, Set
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
@@ -32,27 +33,80 @@ class RateLimiter:
     
     Tracks request timestamps per IP and enforces rate limits with burst tolerance.
     Supports dynamic rate limiting for moderate-risk clients (score 59-79).
+    Synchronizes with authoritative database RequestLogs across server restarts.
     Automatically cleans up old entries to prevent memory leaks.
     """
     
-    def __init__(self, max_requests: int, window_seconds: int, burst: int, moderate_requests: int = RATE_LIMIT_MODERATE_REQUESTS):
+    def __init__(
+        self,
+        max_requests: int,
+        window_seconds: int,
+        burst: int,
+        moderate_requests: int = RATE_LIMIT_MODERATE_REQUESTS,
+        sync_db: bool = False,
+    ):
+        self._lock = threading.Lock()
         self.max_requests = max_requests
         self.moderate_requests = moderate_requests
         self.window_seconds = window_seconds
         self.burst = burst
+        self.sync_db = sync_db
         # Store request timestamps per IP: {ip: deque([timestamp1, timestamp2, ...])}
         self.request_history: Dict[str, Deque[float]] = defaultdict(deque)
         # Track when each IP was last cleaned up
         self.last_cleanup: Dict[str, float] = {}
         # Dynamic risk score cache per IP: {ip: (risk_score, updated_timestamp)}
         self.ip_risk_scores: Dict[str, Tuple[float, float]] = {}
+        # Track IPs whose DB history has been synchronized
+        self._synced_ips: Set[str] = set()
+
+    def _sync_from_db(self, ip: str, current_time: float):
+        """Restore recent requests from RequestLog database into sliding window state."""
+        if not self.sync_db or ip in self._synced_ips:
+            return
+        self._synced_ips.add(ip)
+        try:
+            from app.db_models import RequestLog
+            cutoff_dt = datetime.now(timezone.utc) - timedelta(seconds=self.window_seconds)
+            db = SessionLocal()
+            try:
+                rows = (
+                    db.query(RequestLog.timestamp)
+                    .filter(RequestLog.ip == ip, RequestLog.timestamp >= cutoff_dt)
+                    .order_by(RequestLog.timestamp.asc())
+                    .all()
+                )
+                existing_timestamps = set(self.request_history[ip])
+                for (ts,) in rows:
+                    if ts is not None:
+                        epoch = ts.timestamp() if ts.tzinfo else ts.replace(tzinfo=timezone.utc).timestamp()
+                        if epoch >= current_time - self.window_seconds and epoch not in existing_timestamps:
+                            self.request_history[ip].append(epoch)
+                            existing_timestamps.add(epoch)
+                if self.request_history[ip]:
+                    self.request_history[ip] = deque(sorted(self.request_history[ip]))
+            finally:
+                db.close()
+        except Exception:
+            pass
+
+    def reset_ip(self, ip: str):
+        """Clear rate limit tracking history and risk scores for an IP."""
+        with self._lock:
+            if ip in self.request_history:
+                del self.request_history[ip]
+            if ip in self.last_cleanup:
+                del self.last_cleanup[ip]
+            # Keep marked as synced so prior historical DB rows are not reloaded on reset
+            self._synced_ips.add(ip)
 
     def set_ip_risk(self, ip: str, risk_score: float, force: bool = False):
         """Record the active risk score for an IP. Retains highest elevated risk in window unless forced."""
-        existing = self.get_ip_risk(ip)
-        if not force and existing is not None and existing > float(risk_score):
-            return
-        self.ip_risk_scores[ip] = (float(risk_score), time.time())
+        with self._lock:
+            existing = self.get_ip_risk(ip)
+            if not force and existing is not None and existing > float(risk_score):
+                return
+            self.ip_risk_scores[ip] = (float(risk_score), time.time())
 
     def get_ip_risk(self, ip: str) -> Optional[float]:
         """Get the active risk score for an IP within the 30-minute session window."""
@@ -76,114 +130,118 @@ class RateLimiter:
         Returns:
             tuple: (is_allowed, rate_limit_info)
         """
-        current_time = time.time()
-        self._cleanup_old_requests(ip, current_time)
-        request_count = len(self.request_history[ip])
+        with self._lock:
+            current_time = time.time()
+            self._sync_from_db(ip, current_time)
+            self._cleanup_old_requests(ip, current_time)
+            request_count = len(self.request_history[ip])
 
-        if is_moderate_risk is None:
-            is_moderate_risk = self.is_moderate_risk(ip)
+            if is_moderate_risk is None:
+                is_moderate_risk = self.is_moderate_risk(ip)
 
-        effective_limit = self.moderate_requests if is_moderate_risk else self.max_requests
-        effective_burst = 0 if is_moderate_risk else self.burst
+            effective_limit = self.moderate_requests if is_moderate_risk else self.max_requests
+            effective_burst = 0 if is_moderate_risk else self.burst
 
-        time_in_window = 0
-        if request_count > 0:
-            oldest_request = self.request_history[ip][0]
-            time_in_window = current_time - oldest_request
-        else:
-            oldest_request = current_time
+            time_in_window = 0
+            if request_count > 0:
+                oldest_request = self.request_history[ip][0]
+                time_in_window = current_time - oldest_request
+            else:
+                oldest_request = current_time
 
-        reset_time = int(oldest_request + self.window_seconds)
+            reset_time = int(oldest_request + self.window_seconds)
 
-        if request_count < effective_limit:
-            self.request_history[ip].append(current_time)
-            return True, {
-                "limit": effective_limit,
-                "remaining": effective_limit - request_count - 1,
-                "reset": reset_time,
-                "window": self.window_seconds,
-                "current": request_count + 1,
-                "tier": "MODERATE_RISK" if is_moderate_risk else "STANDARD",
-            }
-
-        # Burst capacity only for standard/normal tier
-        if not is_moderate_risk and request_count < effective_limit + effective_burst:
-            if time_in_window < self.window_seconds * 0.5:
+            if request_count < effective_limit:
                 self.request_history[ip].append(current_time)
                 return True, {
-                    "limit": effective_limit + effective_burst,
-                    "remaining": effective_limit + effective_burst - request_count - 1,
+                    "limit": effective_limit,
+                    "remaining": effective_limit - request_count - 1,
                     "reset": reset_time,
                     "window": self.window_seconds,
                     "current": request_count + 1,
-                    "burst_used": True,
-                    "tier": "STANDARD",
+                    "tier": "MODERATE_RISK" if is_moderate_risk else "STANDARD",
                 }
 
-        # Rate limit exceeded
-        return False, {
-            "limit": effective_limit,
-            "remaining": 0,
-            "reset": reset_time,
-            "window": self.window_seconds,
-            "current": request_count,
-            "tier": "MODERATE_RISK" if is_moderate_risk else "STANDARD",
-        }
+            # Burst capacity only for standard/normal tier
+            if not is_moderate_risk and request_count < effective_limit + effective_burst:
+                if time_in_window < self.window_seconds * 0.5:
+                    self.request_history[ip].append(current_time)
+                    return True, {
+                        "limit": effective_limit + effective_burst,
+                        "remaining": effective_limit + effective_burst - request_count - 1,
+                        "reset": reset_time,
+                        "window": self.window_seconds,
+                        "current": request_count + 1,
+                        "burst_used": True,
+                        "tier": "STANDARD",
+                    }
 
-    def check_allowed(self, ip: str, is_moderate_risk: Optional[bool] = None) -> Tuple[bool, Dict[str, Any]]:
-        """
-        Non-mutating rate limit check: inspects if request from IP is currently allowed
-        WITHOUT recording a request timestamp or modifying sliding-window history.
-        """
-        current_time = time.time()
-        self._cleanup_old_requests(ip, current_time)
-        request_count = len(self.request_history[ip])
-
-        if is_moderate_risk is None:
-            is_moderate_risk = self.is_moderate_risk(ip)
-
-        effective_limit = self.moderate_requests if is_moderate_risk else self.max_requests
-        effective_burst = 0 if is_moderate_risk else self.burst
-
-        time_in_window = 0
-        if request_count > 0:
-            oldest_request = self.request_history[ip][0]
-            time_in_window = current_time - oldest_request
-        else:
-            oldest_request = current_time
-
-        reset_time = int(oldest_request + self.window_seconds)
-
-        if request_count < effective_limit:
-            return True, {
+            # Rate limit exceeded
+            return False, {
                 "limit": effective_limit,
-                "remaining": effective_limit - request_count,
+                "remaining": 0,
                 "reset": reset_time,
                 "window": self.window_seconds,
                 "current": request_count,
                 "tier": "MODERATE_RISK" if is_moderate_risk else "STANDARD",
             }
 
-        if not is_moderate_risk and request_count < effective_limit + effective_burst:
-            if time_in_window < self.window_seconds * 0.5:
+    def check_allowed(self, ip: str, is_moderate_risk: Optional[bool] = None) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Non-mutating rate limit check: inspects if request from IP is currently allowed
+        WITHOUT recording a request timestamp or modifying sliding-window history.
+        """
+        with self._lock:
+            current_time = time.time()
+            self._sync_from_db(ip, current_time)
+            self._cleanup_old_requests(ip, current_time)
+            request_count = len(self.request_history[ip])
+
+            if is_moderate_risk is None:
+                is_moderate_risk = self.is_moderate_risk(ip)
+
+            effective_limit = self.moderate_requests if is_moderate_risk else self.max_requests
+            effective_burst = 0 if is_moderate_risk else self.burst
+
+            time_in_window = 0
+            if request_count > 0:
+                oldest_request = self.request_history[ip][0]
+                time_in_window = current_time - oldest_request
+            else:
+                oldest_request = current_time
+
+            reset_time = int(oldest_request + self.window_seconds)
+
+            if request_count < effective_limit:
                 return True, {
-                    "limit": effective_limit + effective_burst,
-                    "remaining": effective_limit + effective_burst - request_count,
+                    "limit": effective_limit,
+                    "remaining": effective_limit - request_count,
                     "reset": reset_time,
                     "window": self.window_seconds,
                     "current": request_count,
-                    "burst_used": True,
-                    "tier": "STANDARD",
+                    "tier": "MODERATE_RISK" if is_moderate_risk else "STANDARD",
                 }
 
-        return False, {
-            "limit": effective_limit,
-            "remaining": 0,
-            "reset": reset_time,
-            "window": self.window_seconds,
-            "current": request_count,
-            "tier": "MODERATE_RISK" if is_moderate_risk else "STANDARD",
-        }
+            if not is_moderate_risk and request_count < effective_limit + effective_burst:
+                if time_in_window < self.window_seconds * 0.5:
+                    return True, {
+                        "limit": effective_limit + effective_burst,
+                        "remaining": effective_limit + effective_burst - request_count,
+                        "reset": reset_time,
+                        "window": self.window_seconds,
+                        "current": request_count,
+                        "burst_used": True,
+                        "tier": "STANDARD",
+                    }
+
+            return False, {
+                "limit": effective_limit,
+                "remaining": 0,
+                "reset": reset_time,
+                "window": self.window_seconds,
+                "current": request_count,
+                "tier": "MODERATE_RISK" if is_moderate_risk else "STANDARD",
+            }
     
     def _cleanup_old_requests(self, ip: str, current_time: float):
         """Remove requests older than the time window."""
@@ -204,19 +262,21 @@ class RateLimiter:
     
     def get_stats(self, ip: str) -> Dict[str, int]:
         """Get current rate limit statistics for an IP."""
-        current_time = time.time()
-        self._cleanup_old_requests(ip, current_time)
-        
-        request_count = len(self.request_history[ip])
-        oldest_request = self.request_history[ip][0] if request_count > 0 else current_time
-        
-        return {
-            "current": request_count,
-            "limit": self.max_requests,
-            "remaining": max(0, self.max_requests - request_count),
-            "reset": int(oldest_request + self.window_seconds),
-            "window": self.window_seconds
-        }
+        with self._lock:
+            current_time = time.time()
+            self._sync_from_db(ip, current_time)
+            self._cleanup_old_requests(ip, current_time)
+
+            request_count = len(self.request_history[ip])
+            oldest_request = self.request_history[ip][0] if request_count > 0 else current_time
+
+            return {
+                "current": request_count,
+                "limit": self.max_requests,
+                "remaining": max(0, self.max_requests - request_count),
+                "reset": int(oldest_request + self.window_seconds),
+                "window": self.window_seconds
+            }
 
 
 # Global rate limiter instance
@@ -225,6 +285,7 @@ _rate_limiter = RateLimiter(
     window_seconds=RATE_LIMIT_WINDOW_SECONDS,
     burst=RATE_LIMIT_BURST,
     moderate_requests=RATE_LIMIT_MODERATE_REQUESTS,
+    sync_db=True,
 )
 
 
@@ -292,10 +353,6 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             except Exception:
                 pass
         
-        # Skip rate limiting for localhost during development ONLY IF not moderate risk
-        if client_ip in ["127.0.0.1", "localhost", "::1"] and not is_moderate:
-            return await call_next(request)
-        
         # Check rate limit (standard or moderate-risk tier)
         is_allowed, rate_info = _rate_limiter.is_allowed(client_ip, is_moderate_risk=is_moderate)
         
@@ -303,7 +360,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             # Log rate limit violation to database
             self._log_rate_limit_violation(client_ip, request, rate_info)
             
-            retry_after = max(0, rate_info["reset"] - int(time.time()))
+            retry_after = max(1, rate_info["reset"] - int(time.time()))
             detail_msg = (
                 "Too Many Requests: Moderate-risk rate limit exceeded by Chakravyuh Sentinel"
                 if is_moderate else "Rate limit exceeded"

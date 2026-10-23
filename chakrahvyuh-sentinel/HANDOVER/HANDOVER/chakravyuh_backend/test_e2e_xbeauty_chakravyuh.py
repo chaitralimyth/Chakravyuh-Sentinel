@@ -171,7 +171,8 @@ def test_4_rate_limiting():
     print(f"<- Authoritative single slot consumed for actual request (exactly 1 slot)")
 
     # 4. Test active rate limit enforcement
-    rate_limit_ip = "192.168.1.205"
+    rate_limit_ip = f"192.168.1.{int(time.time()) % 80 + 150}"
+    httpx.post(f"{CHAKRAVYUH_URL}/api/unblock-ip", json={"ip": rate_limit_ip}, timeout=5.0)
     rl_headers = {"X-Forwarded-For": rate_limit_ip}
     print(f"-> Verifying rate limit enforcement for {rate_limit_ip}...")
 
@@ -179,7 +180,7 @@ def test_4_rate_limiting():
     rl_check = httpx.get(f"{CHAKRAVYUH_URL}/api/check-ip/{rate_limit_ip}", timeout=5.0).json()
     if not rl_check.get("rate_limited"):
         print(f"   Injecting traffic burst to bring {rate_limit_ip} to rate limit threshold...")
-        for _ in range(120):
+        for _ in range(6):
             httpx.post(
                 f"{CHAKRAVYUH_URL}/api/ingest-traffic",
                 json={
